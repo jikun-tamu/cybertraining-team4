@@ -1,0 +1,53 @@
+Model Fit Statistics:
+R-squared             1.005995e-02
+Adj. R-squared        7.529801e-03
+F-statistic           3.976031e+00
+Prob (F-statistic)    1.713379e-93
+N observations        1.035570e+05
+Significant Street View Indicators (p < 0.05):
+                        variable  coefficient  p_value significance
+             Barrier_ratios_mean     0.366089 0.001941           **
+                Wall_ratios_mean     0.166904 0.006121           **
+         Catch Basin_ratios_mean    -0.107105 0.020102            *
+        Street Light_ratios_mean     0.873563 0.014098            *
+           Trash Can_ratios_mean     0.199788 0.038999            *
+        Fire Hydrant_ratios_mean    -0.335353 0.001514           **
+           Car Mount_ratios_mean    -0.112124 0.004066           **
+            Building_counts_mean    -0.166891 0.000334          ***
+                 Car_counts_mean     0.302837 0.000120          ***
+ Traffic Sign (Back)_counts_mean    -0.181993 0.048333            *
+             Barrier_counts_mean    -0.444203 0.001477           **
+                Wall_counts_mean    -0.133497 0.017120            *
+         Catch Basin_counts_mean     0.149082 0.046380            *
+Traffic Sign (Front)_counts_mean     0.324762 0.001460           **
+          Motorcycle_counts_mean    -0.774647 0.000024          ***
+            Mountain_counts_mean    -0.112753 0.004809           **
+           Trash Can_counts_mean    -0.252066 0.014734            *
+        Fire Hydrant_counts_mean     0.238535 0.049677            *
+             Parking_counts_mean     0.145802 0.039740            *
+        Motorcyclist_counts_mean     0.369828 0.015416            *
+           Car Mount_counts_mean     0.145918 0.039504            *
+                Bird_counts_mean    -0.112560 0.013232            *
+           Bicyclist_ratios_mean     0.180037 0.009886           **
+        Wheeled Slow_ratios_mean     0.114700 0.001209           **
+           Bike Lane_ratios_mean     0.145555 0.000100          ***
+           Bike Lane_counts_mean    -0.123490 0.000508          ***
+         Utility Pole_ratios_std    -0.072200 0.021789            *
+              Barrier_ratios_std    -0.125619 0.011192            *
+         Fire Hydrant_ratios_std     0.259536 0.000566          ***
+            Car Mount_ratios_std     0.095122 0.000235          ***
+             Building_counts_std    -0.081614 0.004353           **
+                  Car_counts_std    -0.115023 0.032089            *
+                 Pole_counts_std     0.197217 0.001181           **
+  Traffic Sign (Back)_counts_std     0.179078 0.028581            *
+ Traffic Sign (Front)_counts_std    -0.197037 0.006737           **
+           Motorcycle_counts_std     0.427232 0.000120          ***
+           Rail Track_counts_std     0.096253 0.034137            *
+            Trash Can_counts_std     0.216701 0.005093           **
+               Bridge_counts_std    -0.144948 0.004615           **
+         Motorcyclist_counts_std    -0.218573 0.019745            *
+            Bicyclist_ratios_std    -0.093511 0.007855           **
+         Wheeled Slow_ratios_std    -0.070008 0.002885           **
+              Caravan_counts_std    -0.108227 0.012593            *
+            Bike Lane_ratios_std    -0.111183 0.000036          ***
+            Bike Lane_counts_std     0.081405 0.000755          ***

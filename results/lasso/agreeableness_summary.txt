@@ -1,0 +1,56 @@
+Best alpha: 0.000619
+Selected features (53 out of 135):
+                       variable  coefficient
+                         female    -0.016519
+                        edu_own     0.010306
+               Billboard_counts     0.006877
+                 Bicycle_counts    -0.005704
+                 Mailbox_counts     0.005526
+             Catch Basin_counts    -0.005149
+           Other Vehicle_ratios    -0.004573
+            Utility Pole_counts     0.003903
+                   Bench_counts     0.003861
+             Other Rider_counts    -0.003640
+                  Person_counts     0.003639
+           Ground Animal_ratios    -0.003489
+            Junction Box_ratios    -0.003484
+               Trash Can_ratios    -0.003076
+               Bike Rack_ratios    -0.002954
+     Traffic Sign (Back)_ratios    -0.002873
+                       time_now    -0.002748
+                    Boat_counts     0.002517
+                 Parking_ratios    -0.002397
+                   Fence_counts     0.002148
+                     Bus_counts     0.002090
+                 Pothole_counts     0.002088
+                   Bench_ratios     0.002010
+                 Caravan_counts     0.001884
+                Building_counts     0.001667
+      Traffic Sign Frame_ratios     0.001636
+                    Bird_counts     0.001531
+                Curb Cut_ratios    -0.001515
+                 Terrain_counts     0.001432
+                Mountain_ratios    -0.001376
+                    Road_ratios     0.001258
+                         ethnic    -0.001038
+            Fire Hydrant_ratios    -0.000983
+            Motorcyclist_ratios    -0.000912
+  Lane Marking - General_counts    -0.000893
+                    Curb_counts     0.000790
+         Pedestrian Area_counts     0.000777
+                  Banner_counts    -0.000761
+             CCTV Camera_ratios     0.000752
+             Phone Booth_ratios    -0.000707
+       Crosswalk - Plain_ratios    -0.000661
+Lane Marking - Crosswalk_counts    -0.000598
+                 Caravan_ratios     0.000544
+               Bike Lane_ratios    -0.000509
+                            age     0.000427
+                    Snow_ratios    -0.000398
+                Sidewalk_counts     0.000313
+               Car Mount_counts    -0.000306
+               Trash Can_counts    -0.000270
+              Guard Rail_counts    -0.000152
+               Bike Rack_counts    -0.000108
+                 Pothole_ratios     0.000035
+                On Rails_ratios     0.000029

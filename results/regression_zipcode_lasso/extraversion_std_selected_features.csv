@@ -1,0 +1,27 @@
+variable,coefficient
+Person_counts_mean,0.006098194933287772
+Motorcycle_ratios_mean,-0.004995096027801733
+Pole_ratios_mean,0.004896298524715088
+Truck_counts_std,0.004142837825256289
+Lane Marking - General_counts_std,-0.0037933165275235267
+Vegetation_ratios_mean,-0.0023233690580462454
+Bus_counts_std,0.0021881307857473625
+Road_ratios_std,0.0020300612646817133
+Curb_ratios_mean,-0.0019340499301005963
+Bike Lane_counts_std,-0.001351305147843236
+Traffic Sign (Back)_ratios_mean,-0.0013455845779426598
+Truck_ratios_std,0.001297521334136248
+Sand_ratios_std,0.0011351276116877854
+Curb Cut_ratios_mean,-0.0011123650085266305
+Bird_ratios_std,0.0009557913875639865
+Bike Lane_ratios_std,-0.0009294819155973433
+Phone Booth_ratios_mean,-0.0008824065824225382
+Pedestrian Area_ratios_std,-0.000853250151598562
+Curb_ratios_std,-0.0007854928986833547
+Terrain_ratios_std,0.0006970823848980708
+CCTV Camera_counts_mean,0.0006763435004055195
+Water_ratios_std,-0.0005392657819252666
+Lane Marking - General_ratios_mean,-0.0005258819112685671
+Fence_counts_std,0.0003025917437170425
+Caravan_ratios_std,0.00014741995745564803
+Caravan_ratios_mean,7.525525918051129e-05

@@ -1,0 +1,20 @@
+Lasso Model Fit Statistics:
+R-squared                0.086444
+Adj. R-squared           0.075503
+MSE                      0.002131
+Best alpha               0.007043
+N observations         339.000000
+N selected features      4.000000
+
+OLS Model Fit Statistics:
+R-squared             1.313936e-01
+Adj. R-squared        1.209911e-01
+F-statistic           1.263099e+01
+Prob (F-statistic)    1.393454e-09
+N observations        3.390000e+02
+
+Significant Features (p < 0.05):
+               variable  coefficient  p_value significance
+        Road_counts_std    -0.214113 0.000067          ***
+  Rail Track_ratios_std    -0.159244 0.012285            *
+CCTV Camera_ratios_mean    -0.141046 0.030110            *

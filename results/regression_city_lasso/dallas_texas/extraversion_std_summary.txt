@@ -1,0 +1,24 @@
+City: dallas_texas
+Number of zipcodes: 86
+
+Lasso Model Fit Statistics:
+R-squared               0.081721
+Adj. R-squared          0.035807
+MSE                     0.001895
+Best alpha              0.014370
+N observations         85.000000
+N selected features     4.000000
+
+OLS Model Fit Statistics:
+R-squared             3.588224e-01
+Adj. R-squared        3.267635e-01
+F-statistic           1.119260e+01
+Prob (F-statistic)    2.919609e-07
+N observations        8.500000e+01
+
+Significant Features (p < 0.05):
+                       variable  coefficient  p_value significance
+               Curb_ratios_mean    -0.296253 0.003894           **
+Traffic Sign (Back)_ratios_mean    -0.227950 0.025289            *
+             Banner_ratios_mean     0.238485 0.016127            *
+                Bird_ratios_std     0.230782 0.018907            *

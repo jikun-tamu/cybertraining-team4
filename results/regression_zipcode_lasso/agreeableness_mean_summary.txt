@@ -1,0 +1,18 @@
+Lasso Model Fit Statistics:
+R-squared                0.000000
+Adj. R-squared          -0.002967
+MSE                      0.002300
+Best alpha               0.009428
+N observations         339.000000
+N selected features      1.000000
+
+OLS Model Fit Statistics:
+R-squared               0.038708
+Adj. R-squared          0.035864
+F-statistic            13.610011
+Prob (F-statistic)      0.000262
+N observations        340.000000
+
+Significant Features (p < 0.05):
+           variable  coefficient  p_value significance
+Caravan_ratios_mean     0.196743 0.000262          ***

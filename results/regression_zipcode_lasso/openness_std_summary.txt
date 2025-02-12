@@ -1,0 +1,18 @@
+Lasso Model Fit Statistics:
+R-squared                0.280878
+Adj. R-squared           0.228204
+MSE                      0.001292
+Best alpha               0.003032
+N observations         338.000000
+N selected features     23.000000
+
+OLS Model Fit Statistics:
+R-squared             3.452833e-01
+Adj. R-squared        2.973264e-01
+F-statistic           7.199859e+00
+Prob (F-statistic)    2.975116e-18
+N observations        3.380000e+02
+
+Significant Features (p < 0.05):
+               variable  coefficient  p_value significance
+CCTV Camera_counts_mean     0.135514 0.034368            *

@@ -1,0 +1,43 @@
+Model Fit Statistics:
+R-squared             9.102859e-01
+Adj. R-squared        6.061902e-01
+F-statistic           2.993419e+00
+Prob (F-statistic)    5.030839e-08
+N observations        3.390000e+02
+Significant Street View Indicators (p < 0.05):
+                            variable  coefficient  p_value significance
+                Sidewalk_ratios_mean     3.530453 0.039194            *
+                     Sky_ratios_mean     2.140386 0.037761            *
+              Vegetation_ratios_mean     2.220516 0.031245            *
+                 Barrier_ratios_mean     2.157548 0.017242            *
+  Lane Marking - General_ratios_mean    -1.640619 0.010680            *
+              Guard Rail_ratios_mean     1.576438 0.031183            *
+            Fire Hydrant_ratios_mean    -2.518095 0.007001           **
+                     Bus_ratios_mean    -2.261074 0.022462            *
+Lane Marking - Crosswalk_ratios_mean    -1.160273 0.023410            *
+                On Rails_ratios_mean    -0.560916 0.043171            *
+               Car Mount_ratios_mean    -0.955923 0.009053           **
+                  Tunnel_ratios_mean   -22.439470 0.033639            *
+              Rail Track_counts_mean    -3.504874 0.025829            *
+              Guard Rail_counts_mean    -2.299126 0.022043            *
+           Ground Animal_counts_mean    -0.853241 0.035212            *
+                On Rails_counts_mean     1.016758 0.000174          ***
+               Car Mount_counts_mean     1.702530 0.008340           **
+            Wheeled Slow_ratios_mean     0.759455 0.025229            *
+                 Building_ratios_std     0.960538 0.025537            *
+                  Terrain_ratios_std     0.553654 0.049412            *
+             Utility Pole_ratios_std    -0.548675 0.025136            *
+                    Fence_ratios_std     1.082164 0.007279           **
+                Trash Can_ratios_std     1.439809 0.014792            *
+             Fire Hydrant_ratios_std     1.448583 0.033059            *
+            Ground Animal_ratios_std    -0.855437 0.018175            *
+ Lane Marking - Crosswalk_ratios_std     0.747768 0.002166           **
+                Car Mount_ratios_std     0.656802 0.002490           **
+             Utility Pole_counts_std     1.011737 0.011183            *
+                     Road_counts_std    -1.486770 0.009734           **
+               Rail Track_counts_std     1.000492 0.007756           **
+               Guard Rail_counts_std     1.212284 0.047699            *
+                 On Rails_counts_std    -0.798914 0.001584           **
+                Car Mount_counts_std    -1.547691 0.007005           **
+                Bike Lane_ratios_std    -0.541356 0.014389            *
+               visual_complexity_std     0.805636 0.029463            *

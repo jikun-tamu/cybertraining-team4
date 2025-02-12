@@ -1,0 +1,37 @@
+Lasso Model Fit Statistics:
+R-squared                   0.006561
+Adj. R-squared              0.006033
+MSE                         0.132567
+Best alpha                  0.000743
+N observations         103557.000000
+N selected features        55.000000
+
+OLS Model Fit Statistics:
+R-squared              6.992839e-03
+Adj. R-squared         6.465159e-03
+F-statistic            1.325205e+01
+Prob (F-statistic)    6.348533e-118
+N observations         1.035570e+05
+
+Significant Features (p < 0.05):
+                          variable  coefficient      p_value significance
+                           edu_own     0.049858 7.088653e-56          ***
+                            female    -0.035502 2.852303e-30          ***
+            Guard Rail_ratios_mean     0.021390 1.171324e-05          ***
+             Rail Track_counts_std    -0.020330 1.405295e-03           **
+               Sidewalk_ratios_std    -0.022881 1.794111e-03           **
+               Caravan_counts_mean     0.020555 2.097008e-04          ***
+ Lane Marking - General_counts_std     0.017474 1.113604e-03           **
+           Other Rider_counts_mean    -0.013472 3.179642e-04          ***
+                  Truck_ratios_std    -0.014056 1.354681e-02            *
+                  Truck_counts_std    -0.016419 8.911829e-03           **
+                            ethnic     0.011479 3.078535e-04          ***
+          Junction Box_counts_mean     0.018490 5.058397e-03           **
+             Vegetation_ratios_std    -0.018774 5.924018e-03           **
+Lane Marking - General_ratios_mean    -0.020614 2.336008e-05          ***
+                  Bench_counts_std     0.019982 1.184921e-03           **
+          Wheeled Slow_counts_mean    -0.016701 6.339327e-04          ***
+          Traffic Light_ratios_std     0.013146 1.917576e-03           **
+               Building_ratios_std     0.017197 2.847973e-02            *
+              Mountain_counts_mean    -0.008451 4.011164e-02            *
+             Car Mount_counts_mean     0.009905 1.730584e-02            *

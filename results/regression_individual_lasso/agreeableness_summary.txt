@@ -1,0 +1,32 @@
+Lasso Model Fit Statistics:
+R-squared                   0.006069
+Adj. R-squared              0.005512
+MSE                         0.129217
+Best alpha                  0.000718
+N observations         103557.000000
+N selected features        58.000000
+
+OLS Model Fit Statistics:
+R-squared              6.413498e-03
+Adj. R-squared         5.856695e-03
+F-statistic            1.151843e+01
+Prob (F-statistic)    3.482994e-104
+N observations         1.035570e+05
+
+Significant Features (p < 0.05):
+                       variable  coefficient      p_value significance
+                         female    -0.048342 1.307108e-54          ***
+                        edu_own     0.030773 3.130023e-22          ***
+                Pole_counts_std     0.035857 3.033079e-05          ***
+Traffic Sign (Back)_ratios_mean    -0.015296 2.213198e-02            *
+        Catch Basin_counts_mean    -0.021123 2.116851e-05          ***
+            Bicycle_counts_mean    -0.015457 2.047999e-02            *
+        Other Rider_counts_mean    -0.019493 9.568562e-05          ***
+       Utility Pole_counts_mean     0.012040 1.839536e-02            *
+            Parking_ratios_mean    -0.013435 1.086938e-03           **
+            Caravan_counts_mean     0.012735 3.312611e-02            *
+      Ground Animal_ratios_mean    -0.012616 2.287081e-03           **
+          Trash Can_ratios_mean    -0.014185 1.269992e-02            *
+             Pothole_counts_std     0.010852 2.094967e-02            *
+                       time_now    -0.010780 7.107231e-04          ***
+               Boat_counts_mean     0.008987 2.279968e-02            *

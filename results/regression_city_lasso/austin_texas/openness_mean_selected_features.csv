@@ -1,0 +1,26 @@
+variable,coefficient
+Other Vehicle_ratios_mean,0.03174435010214666
+CCTV Camera_ratios_mean,-0.008599530157729874
+Wheeled Slow_ratios_mean,0.007818141991491117
+Traffic Sign (Front)_ratios_mean,0.007775179099169353
+Terrain_counts_std,0.006889453435654003
+Caravan_counts_std,0.006229976720540404
+Traffic Sign (Back)_ratios_std,0.006183166574222984
+Banner_ratios_std,-0.0052222660930545655
+Other Vehicle_counts_std,0.0038773123670003897
+Sand_ratios_std,0.0031418966905104955
+Traffic Sign (Front)_ratios_std,0.0024702760993064853
+Bicycle_ratios_std,-0.0017920748435747667
+Barrier_ratios_std,0.0016572319488491174
+Parking_ratios_std,0.0016556279260786803
+Tunnel_counts_mean,-0.001421518690805145
+Boat_ratios_mean,0.0013769987346510851
+Other Vehicle_counts_mean,0.0011816813383586974
+Crosswalk - Plain_counts_std,0.0007721024874230889
+On Rails_counts_std,-0.000669827444064488
+Catch Basin_ratios_std,0.0005698781728842948
+Banner_ratios_mean,-0.0005422412155890358
+Trash Can_counts_mean,-0.0005363106366531763
+Bench_counts_mean,-0.00041887212444845787
+Traffic Sign Frame_counts_mean,0.0003946222448787522
+Water_counts_std,0.00034165960460780774

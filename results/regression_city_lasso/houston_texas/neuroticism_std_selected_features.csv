@@ -1,0 +1,11 @@
+variable,coefficient
+Other Vehicle_counts_mean,0.003413829624503195
+Parking_counts_mean,-0.0033162959742774685
+Lane Marking - General_counts_std,-0.002435800893551863
+Caravan_ratios_std,0.0012639728163535205
+Truck_counts_std,0.0012031131368467252
+Rail Track_ratios_mean,0.0010624202805249521
+Person_counts_mean,0.0009315996133378162
+Bike Lane_ratios_std,-0.0008698579146521315
+Truck_counts_mean,0.0003843196697950793
+Bike Rack_counts_std,-0.0001757213762790242

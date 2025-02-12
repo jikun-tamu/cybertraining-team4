@@ -1,0 +1,52 @@
+
+Model Fit Statistics:
+R-squared              1.357564e-02
+Adj. R-squared         1.273351e-02
+F-statistic            1.612065e+01
+Prob (F-statistic)    9.442808e-240
+N observations         1.043400e+05
+Significant Street View Indicators (p < 0.05):
+                   variable  coefficient      p_value significance
+                Curb_counts     0.094491 6.847759e-06          ***
+                Curb_ratios    -0.071296 9.651311e-06          ***
+                Snow_ratios     0.076486 2.849279e-05          ***
+                Pole_ratios     0.055212 3.936228e-05          ***
+                Snow_counts    -0.072697 1.183524e-05          ***
+             Mailbox_ratios     0.057680 1.919349e-06          ***
+            Curb Cut_counts    -0.032451 2.128759e-04          ***
+       Traffic Light_ratios    -0.047144 8.421464e-10          ***
+           Trash Can_ratios    -0.037970 7.293213e-07          ***
+               Fence_counts     0.043443 8.340105e-08          ***
+               Water_ratios     0.036533 1.653908e-05          ***
+                 Car_ratios     0.048866 4.206938e-02            *
+               Truck_counts     0.041670 2.156405e-03           **
+ Traffic Sign (Back)_ratios    -0.035069 2.356312e-03           **
+        Utility Pole_ratios     0.060169 7.854646e-04          ***
+        Motorcyclist_ratios    -0.027594 1.764085e-02            *
+        Street Light_counts    -0.036209 1.769952e-03           **
+           Bike Rack_ratios    -0.036962 4.206236e-05          ***
+        Utility Pole_counts    -0.059819 2.721912e-04          ***
+             Mailbox_counts    -0.042034 2.356875e-04          ***
+Traffic Sign (Front)_ratios     0.032386 1.747767e-03           **
+       Other Vehicle_counts    -0.031442 1.843338e-03           **
+         Catch Basin_counts    -0.028563 9.164591e-05          ***
+       Ground Animal_counts     0.024055 6.878773e-05          ***
+          Motorcycle_counts    -0.040806 2.301418e-02            *
+             Bicycle_ratios    -0.021210 4.062117e-02            *
+                Bird_ratios     0.021711 2.356235e-03           **
+             Caravan_counts    -0.019701 2.288406e-02            *
+                Wall_counts     0.031432 1.891055e-03           **
+            Mountain_counts     0.025301 5.251564e-04          ***
+          Guard Rail_ratios     0.019512 6.418000e-03           **
+               Bench_counts     0.017106 3.230070e-02            *
+            Building_ratios     0.032388 1.873175e-02            *
+        Fire Hydrant_ratios    -0.020369 1.179021e-03           **
+           Bike Rack_counts     0.031961 6.102183e-03           **
+             Caravan_ratios     0.019170 7.872288e-03           **
+             Pothole_ratios     0.014708 2.574275e-02            *
+     Pedestrian Area_ratios    -0.020501 4.846921e-03           **
+       Ground Animal_ratios    -0.017879 6.980212e-04          ***
+         Phone Booth_counts     0.012979 5.332109e-03           **
+   Crosswalk - Plain_counts    -0.007619 3.147238e-02            *
+                Boat_counts    -0.008963 4.526172e-02            *
+  Traffic Sign Frame_ratios    -0.013330 3.699079e-02            *

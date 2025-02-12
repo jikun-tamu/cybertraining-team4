@@ -1,0 +1,28 @@
+variable,coefficient
+Lane Marking - General_counts_std,-0.004672411165204527
+Curb_ratios_mean,-0.003503868817202355
+Vegetation_ratios_mean,-0.0029753783034003572
+Fence_counts_mean,0.0028114354595154185
+Mailbox_ratios_std,0.0024860109539406256
+Motorcycle_ratios_std,-0.0014494074652413936
+Boat_ratios_mean,0.0013838239130721235
+Motorcyclist_ratios_mean,-0.0012245913223323964
+Snow_counts_mean,0.0011578116420966308
+Traffic Light_ratios_mean,0.0011299528823845869
+Mailbox_counts_std,0.000947522504542059
+Parking_counts_mean,-0.0008797974606527125
+Pole_ratios_mean,0.0008573324629054841
+Catch Basin_ratios_mean,0.000592995461251263
+Bike Rack_counts_mean,0.0005894087405140517
+Service Lane_ratios_mean,-0.0005071617981958756
+Service Lane_ratios_std,-0.00047727198737961614
+Motorcycle_counts_std,-0.0004102716881952695
+Ego Vehicle_ratios_std,-0.0004055048953333842
+Lane Marking - General_ratios_mean,-0.0003297592297146265
+Traffic Light_counts_std,0.00031679977586068645
+Utility Pole_counts_mean,0.000306927101303681
+Street Light_ratios_mean,0.00027803519629217077
+Mailbox_counts_mean,0.00020302037469601244
+Rail Track_ratios_std,2.3147861722057768e-05
+Bird_ratios_std,1.8703129800344305e-05
+Motorcycle_ratios_mean,-2.7505290752626436e-06

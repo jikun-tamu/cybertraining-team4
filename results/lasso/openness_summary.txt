@@ -1,0 +1,63 @@
+Best alpha: 0.000792
+Selected features (60 out of 135):
+                       variable  coefficient
+                         female    -0.039137
+                 Bicycle_counts    -0.019110
+                  Person_counts     0.012950
+Lane Marking - Crosswalk_counts     0.010772
+                 Bicycle_ratios    -0.010488
+              Vegetation_ratios     0.009901
+           Ground Animal_ratios    -0.008295
+              Guard Rail_ratios     0.007899
+                Building_counts     0.006723
+     Traffic Sign (Back)_counts     0.006488
+             CCTV Camera_ratios    -0.006343
+               Car Mount_ratios     0.005646
+            Wheeled Slow_ratios     0.005103
+              Motorcycle_counts    -0.004962
+                       time_now    -0.004586
+                    Road_counts     0.004553
+                On Rails_ratios     0.004329
+                   Truck_ratios     0.004306
+                   Truck_counts     0.003870
+            Fire Hydrant_counts     0.003845
+               Billboard_counts     0.003763
+                         ethnic    -0.003740
+  Lane Marking - General_ratios    -0.003611
+                   Water_ratios     0.002916
+                 Pothole_ratios    -0.002905
+                  Banner_counts     0.002798
+                Sidewalk_counts     0.002521
+                        edu_own    -0.002387
+                   Bench_ratios    -0.002283
+                 Mailbox_ratios     0.002172
+       Crosswalk - Plain_ratios     0.002165
+            Utility Pole_ratios     0.001911
+           Traffic Light_ratios    -0.001909
+             Phone Booth_ratios     0.001729
+                     Bus_counts     0.001720
+                  Banner_ratios    -0.001690
+            Service Lane_counts    -0.001584
+                Curb Cut_counts    -0.001570
+                 Caravan_ratios     0.001541
+                            age    -0.001539
+                    Wall_counts    -0.001524
+                  Bridge_ratios    -0.001462
+               Trash Can_counts    -0.001460
+                Mountain_ratios     0.001411
+            Junction Box_ratios    -0.001387
+                 Trailer_counts     0.001339
+               Bike Rack_ratios    -0.001281
+            Motorcyclist_counts     0.001229
+             Catch Basin_counts    -0.001066
+             Ego Vehicle_ratios     0.000914
+                On Rails_counts    -0.000766
+           Other Vehicle_counts     0.000698
+               Bicyclist_ratios     0.000685
+                   Fence_ratios     0.000621
+                     Bus_ratios     0.000585
+             Other Rider_ratios    -0.000486
+                    Sand_counts     0.000444
+                    Pole_ratios     0.000435
+         Pedestrian Area_counts    -0.000411
+                 Manhole_counts    -0.000379

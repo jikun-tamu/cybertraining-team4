@@ -1,0 +1,40 @@
+
+Model Fit Statistics:
+R-squared             3.919308e-03
+Adj. R-squared        3.144430e-03
+F-statistic           5.057973e+00
+Prob (F-statistic)    2.718075e-45
+N observations        1.042050e+05
+Significant Street View Indicators (p < 0.05):
+                   variable  coefficient      p_value significance
+          Rail Track_counts    -0.044251 3.950804e-08          ***
+        Motorcyclist_ratios     0.033511 2.592257e-04          ***
+             Bicycle_counts    -0.045822 2.970074e-02            *
+              Person_counts     0.043621 1.725924e-02            *
+                Sand_counts     0.049028 2.096312e-03           **
+          Vegetation_ratios     0.036983 3.982717e-05          ***
+Traffic Sign (Front)_ratios    -0.033878 1.154859e-03           **
+               Truck_ratios    -0.035714 2.770001e-03           **
+                Wall_ratios    -0.020742 7.650068e-03           **
+       Other Vehicle_ratios    -0.060026 5.763341e-05          ***
+              Person_ratios    -0.044392 1.317104e-02            *
+           Billboard_ratios     0.017549 1.348266e-02            *
+        Utility Pole_ratios     0.022591 2.601954e-03           **
+          Guard Rail_ratios     0.014917 1.495070e-02            *
+       Other Vehicle_counts     0.034067 7.496552e-04          ***
+             Mailbox_counts     0.032126 3.166376e-03           **
+               Bench_ratios     0.029070 1.701423e-02            *
+              Tunnel_ratios    -0.023340 4.510994e-03           **
+             Parking_ratios    -0.024946 1.027534e-03           **
+             Parking_counts     0.028915 1.547273e-03           **
+         Other Rider_counts    -0.012556 2.760165e-03           **
+         Ego Vehicle_counts    -0.024209 1.826643e-03           **
+           Car Mount_counts     0.012619 8.044250e-03           **
+        Wheeled Slow_ratios    -0.011322 2.255819e-02            *
+                Sand_ratios    -0.026248 2.044975e-02            *
+              Banner_ratios    -0.010716 2.078162e-02            *
+                 Bus_counts     0.029139 4.354680e-02            *
+             Mailbox_ratios    -0.025245 3.187469e-02            *
+            Building_counts    -0.025253 8.524439e-03           **
+     Pedestrian Area_ratios     0.012732 4.261202e-02            *
+         Phone Booth_counts    -0.011743 1.812108e-02            *

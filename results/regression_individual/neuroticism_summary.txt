@@ -1,0 +1,26 @@
+Model Fit Statistics:
+R-squared             6.686694e-03
+Adj. R-squared        4.147923e-03
+F-statistic           2.633831e+00
+Prob (F-statistic)    2.376750e-40
+N observations        1.035570e+05
+Significant Street View Indicators (p < 0.05):
+                            variable  coefficient  p_value significance
+Lane Marking - Crosswalk_ratios_mean    -0.143896 0.034352            *
+              Rail Track_counts_mean    -0.591410 0.038709            *
+                   Water_counts_mean    -0.183040 0.045023            *
+           Ground Animal_counts_mean    -0.108873 0.007360           **
+Lane Marking - Crosswalk_counts_mean     0.180105 0.038649            *
+                On Rails_counts_mean     0.066366 0.007049           **
+                    Boat_ratios_mean    -0.146619 0.022414            *
+               Bike Lane_ratios_mean     0.107850 0.003993           **
+               Bike Lane_counts_mean    -0.106314 0.002811           **
+       Crosswalk - Plain_counts_mean    -0.037758 0.033107            *
+                      Bus_ratios_std     0.035294 0.043271            *
+                     Curb_counts_std    -0.085912 0.025710            *
+                  Terrain_counts_std    -0.156896 0.009493           **
+                 On Rails_counts_std    -0.075952 0.000979          ***
+                     Boat_ratios_std     0.161146 0.010302            *
+              Other Rider_counts_std     0.057098 0.044014            *
+                Bike Lane_ratios_std    -0.070999 0.008480           **
+                Bike Lane_counts_std     0.058611 0.015460            *

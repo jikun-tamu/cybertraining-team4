@@ -1,0 +1,56 @@
+variable,coefficient
+edu_own,0.01751687992742589
+female,-0.012289662108260362
+Guard Rail_ratios_mean,0.006116309525319003
+Rail Track_counts_std,-0.005584175027832931
+Sidewalk_ratios_std,-0.005466187397020853
+Caravan_counts_mean,0.004241849450822086
+Lane Marking - General_counts_std,0.004169064427530381
+Other Rider_counts_mean,-0.0040404530599418365
+Truck_ratios_std,-0.003949318926376288
+Truck_counts_std,-0.003738506066158683
+ethnic,0.003583472664613363
+Junction Box_counts_mean,0.0035028584163404697
+Vegetation_ratios_std,-0.003374637867473472
+Lane Marking - General_ratios_mean,-0.003315511043224619
+Bench_counts_std,0.0031064057211793767
+Wheeled Slow_counts_mean,-0.0030638660807841256
+Traffic Light_ratios_std,0.002933331423441218
+Building_ratios_std,0.002257920245215775
+Mountain_counts_mean,-0.002246551815331695
+Lane Marking - Crosswalk_ratios_std,0.002030988343760519
+Traffic Sign (Front)_ratios_mean,-0.001858048794397632
+Ego Vehicle_ratios_std,0.001689528884598847
+Ground Animal_ratios_mean,-0.0015920008752952717
+Banner_counts_std,0.0014553262469613505
+Parking_ratios_mean,-0.0013280376980813707
+Motorcyclist_counts_std,0.0012963847539699917
+Bus_counts_std,0.0012413933346457628
+Guard Rail_counts_std,-0.0012330599649512752
+Car_counts_mean,0.0011987422988588598
+Pothole_counts_mean,0.001180154877092121
+Person_ratios_std,-0.001170080605861683
+Bike Rack_ratios_std,-0.0011527426412842859
+CCTV Camera_counts_mean,-0.000974053572198579
+Boat_ratios_mean,-0.0009523113712122704
+Pothole_ratios_std,-0.0008956417134667326
+Car Mount_counts_mean,0.0008764200782627779
+Other Vehicle_counts_mean,0.0008496663810098386
+Catch Basin_counts_std,-0.0008369555782504908
+Parking_counts_mean,0.0008260020649259881
+time_now,-0.0007991852683859812
+Boat_counts_mean,0.0006479058992628522
+Motorcyclist_ratios_mean,0.000601037014844707
+Boat_ratios_std,-0.0005644074772766503
+Traffic Sign Frame_counts_std,-0.000488930756307188
+Bicyclist_ratios_mean,0.00042732605659167086
+age,-0.00039885295729144896
+Bicyclist_ratios_std,0.0003467051567799406
+Bird_counts_std,-0.0003251369221267293
+Service Lane_counts_std,0.0003127957250949349
+Mailbox_ratios_std,-0.0002424122785229263
+Fire Hydrant_counts_std,-0.00021987046542380672
+CCTV Camera_ratios_mean,-0.00018685529850663986
+Caravan_ratios_std,-0.0001463203148551502
+Bus_counts_mean,8.473349603788177e-05
+Bike Rack_ratios_mean,-1.1850794881559098e-05

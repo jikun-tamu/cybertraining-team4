@@ -1,0 +1,19 @@
+variable,coefficient
+Motorcyclist_counts_mean,-0.00735979207226419
+Banner_ratios_mean,0.006706467481515315
+Car Mount_counts_mean,-0.005924771366246615
+Bus_ratios_mean,0.005459591110288252
+Catch Basin_counts_mean,0.0036485120818991533
+Ego Vehicle_ratios_std,-0.002612681364139215
+Banner_ratios_std,0.0024894673009660346
+Guard Rail_counts_std,-0.002344123200356795
+Mailbox_counts_std,0.002083796195377844
+Phone Booth_ratios_mean,-0.002054221020726543
+Snow_ratios_std,-0.0018026042398204356
+Curb_ratios_mean,0.0015802725257726357
+Pedestrian Area_ratios_std,-0.001387884135053204
+Bicyclist_counts_mean,-0.0009956488133355391
+Utility Pole_ratios_std,-0.0009190858570134948
+Road_ratios_std,-0.000892805062938005
+Bike Lane_counts_mean,-0.000526387403196867
+Lane Marking - General_counts_std,-0.00013191133554835277

@@ -1,0 +1,27 @@
+City: dallas_texas
+Number of zipcodes: 86
+
+Lasso Model Fit Statistics:
+R-squared               0.695723
+Adj. R-squared          0.580995
+MSE                     0.001325
+Best alpha              0.004297
+N observations         85.000000
+N selected features    23.000000
+
+OLS Model Fit Statistics:
+R-squared             7.799438e-01
+Adj. R-squared        6.969718e-01
+F-statistic           9.400083e+00
+Prob (F-statistic)    1.372749e-12
+N observations        8.500000e+01
+
+Significant Features (p < 0.05):
+                        variable  coefficient  p_value significance
+             On Rails_ratios_std     0.330490 0.000281          ***
+             Caravan_ratios_mean     0.305729 0.000936          ***
+               Bench_counts_mean     0.249360 0.017780            *
+               Truck_ratios_mean     0.195559 0.007789           **
+               Banner_ratios_std     0.150781 0.023582            *
+       Ground Animal_ratios_mean    -0.189752 0.034756            *
+Traffic Sign (Front)_ratios_mean     0.385746 0.038495            *

@@ -1,0 +1,24 @@
+variable,coefficient
+Traffic Sign (Back)_counts_mean,-0.010799427387073174
+Other Rider_counts_mean,-0.006955675391725036
+Bird_ratios_mean,-0.006177719796989797
+CCTV Camera_counts_std,0.005913729432508965
+Truck_ratios_std,0.004084771381790481
+Bird_ratios_std,-0.0035392066014265353
+Mailbox_counts_std,0.003383275676511746
+Other Vehicle_counts_std,0.003371469446878352
+Street Light_ratios_mean,0.002723698091874778
+Mountain_ratios_std,-0.0021681745816247637
+Guard Rail_ratios_std,0.0020563997967705614
+Mailbox_counts_mean,0.0017464524298031025
+Caravan_ratios_mean,-0.0013313290656103824
+Boat_counts_std,0.0012651088733172946
+Fire Hydrant_counts_mean,0.0010542547200521372
+Junction Box_ratios_mean,-0.0010123208566139223
+Terrain_ratios_mean,0.0008232386767536898
+Bus_ratios_std,-0.0005709578835673288
+Street Light_ratios_std,0.0005266445996814854
+Crosswalk - Plain_ratios_std,0.0003500973915072558
+Tunnel_ratios_std,0.000295322610411526
+Trash Can_counts_mean,-0.0002067205251376542
+Car Mount_counts_mean,3.3796597429351046e-05

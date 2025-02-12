@@ -1,0 +1,92 @@
+Best alpha: 0.000191
+Selected features (89 out of 135):
+                       variable  coefficient
+                    Curb_counts     0.027752
+                    Curb_ratios    -0.020573
+                    Snow_ratios     0.018263
+                        edu_own     0.018258
+                         female     0.018204
+                    Pole_ratios     0.017299
+                    Snow_counts    -0.016190
+                 Mailbox_ratios     0.015562
+                Curb Cut_counts    -0.014562
+           Traffic Light_ratios    -0.013773
+                 Terrain_counts     0.013644
+               Trash Can_ratios    -0.012430
+                   Fence_counts     0.012418
+                   Water_ratios     0.012020
+                     Car_ratios     0.011492
+                   Truck_counts     0.010676
+     Traffic Sign (Back)_ratios    -0.009616
+            Utility Pole_ratios     0.009111
+            Motorcyclist_ratios    -0.009016
+            Street Light_counts    -0.008945
+               Bike Rack_ratios    -0.008891
+            Utility Pole_counts    -0.008651
+                 Mailbox_counts    -0.008569
+    Traffic Sign (Front)_ratios     0.008160
+           Other Vehicle_counts    -0.008131
+             Catch Basin_counts    -0.007956
+           Ground Animal_counts     0.007499
+              Motorcycle_counts    -0.007415
+                 Bicycle_ratios    -0.006927
+                    Bird_ratios     0.006620
+                         ethnic    -0.006360
+                       time_now    -0.006283
+                 Caravan_counts    -0.006218
+                    Wall_counts     0.006150
+                Mountain_counts     0.005999
+              Guard Rail_ratios     0.005920
+                   Bench_counts     0.005796
+                Building_ratios     0.005705
+     Traffic Sign (Back)_counts     0.005615
+            Fire Hydrant_ratios    -0.005528
+                     Car_counts     0.005513
+               Bike Rack_counts     0.005407
+                 Caravan_ratios     0.005336
+  Lane Marking - General_counts    -0.004989
+                 Pothole_ratios     0.004970
+         Pedestrian Area_ratios    -0.004956
+            Wheeled Slow_ratios     0.004887
+               Bicyclist_ratios    -0.004845
+           Ground Animal_ratios    -0.004800
+                  Person_counts     0.004774
+                 Parking_counts    -0.004101
+              Vegetation_ratios    -0.003364
+            Wheeled Slow_counts     0.003238
+                    Sand_ratios     0.003004
+               Billboard_counts     0.002836
+                Sidewalk_counts     0.002789
+               Car Mount_ratios     0.002788
+             Phone Booth_counts     0.002753
+       Crosswalk - Plain_counts    -0.002697
+              Vegetation_counts     0.002512
+              Rail Track_ratios    -0.002505
+              Rail Track_counts    -0.002505
+             Ego Vehicle_ratios    -0.002468
+                    Road_ratios     0.002465
+               Bike Lane_ratios    -0.002164
+             Other Rider_ratios    -0.002147
+                  Bridge_ratios    -0.002143
+                    Boat_counts    -0.002059
+                 Manhole_counts     0.001976
+                Mountain_ratios    -0.001576
+                     Sky_counts    -0.001568
+                   Fence_ratios    -0.001441
+                 Terrain_ratios     0.001251
+             Other Rider_counts     0.001211
+            Service Lane_ratios     0.001139
+                On Rails_ratios    -0.001046
+                    Sand_counts     0.000997
+                   Truck_ratios    -0.000988
+            Junction Box_ratios    -0.000895
+                On Rails_counts     0.000761
+                 Pothole_counts    -0.000729
+                 Manhole_ratios     0.000443
+Lane Marking - Crosswalk_counts    -0.000375
+             CCTV Camera_ratios    -0.000317
+                Building_counts     0.000296
+                 Parking_ratios     0.000256
+      Traffic Sign Frame_ratios    -0.000211
+                  Banner_counts    -0.000103
+           Other Vehicle_ratios    -0.000054

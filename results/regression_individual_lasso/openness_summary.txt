@@ -1,0 +1,43 @@
+Lasso Model Fit Statistics:
+R-squared                   0.010889
+Adj. R-squared              0.010210
+MSE                         0.262762
+Best alpha                  0.000980
+N observations         103557.000000
+N selected features        71.000000
+
+OLS Model Fit Statistics:
+R-squared              1.137301e-02
+Adj. R-squared         1.069472e-02
+F-statistic            1.676725e+01
+Prob (F-statistic)    2.056144e-201
+N observations         1.035570e+05
+
+Significant Features (p < 0.05):
+                       variable  coefficient       p_value significance
+                         female    -0.078021 1.505386e-139          ***
+            Building_counts_std    -0.023434  2.844130e-06          ***
+        Wheeled Slow_ratios_std     0.017311  7.824404e-05          ***
+               Water_ratios_std     0.013177  1.680945e-02            *
+              Truck_counts_mean     0.015632  1.957464e-03           **
+                 Bus_counts_std     0.013531  1.628282e-02            *
+      Ground Animal_ratios_mean    -0.008806  3.761744e-02            *
+          Vegetation_counts_std    -0.018250  4.842978e-03           **
+                Sand_ratios_std     0.015387  2.905056e-02            *
+         CCTV Camera_counts_std    -0.016475  2.899992e-02            *
+                 Sky_ratios_std     0.017571  9.668347e-03           **
+                       time_now    -0.010693  8.038800e-04          ***
+        Fire Hydrant_ratios_std     0.014913  1.221980e-02            *
+            Pothole_ratios_mean    -0.009628  2.657181e-02            *
+Traffic Sign (Back)_counts_mean     0.016299  1.928701e-02            *
+             Caravan_ratios_std     0.012126  3.011435e-02            *
+             Terrain_ratios_std    -0.010750  4.189416e-02            *
+              Bench_ratios_mean    -0.013384  2.924544e-02            *
+                         ethnic    -0.009032  4.340969e-03           **
+           Billboard_ratios_std     0.012463  3.085120e-02            *
+ Traffic Sign (Back)_ratios_std    -0.016085  5.122478e-03           **
+              Bridge_ratios_std    -0.013666  3.411723e-02            *
+   Crosswalk - Plain_ratios_std     0.007715  2.350588e-02            *
+          Guard Rail_counts_std    -0.018279  1.763336e-02            *
+            Caravan_counts_mean    -0.011118  3.106816e-02            *
+             Bridge_counts_mean     0.013710  4.877565e-02            *

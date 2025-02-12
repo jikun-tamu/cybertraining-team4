@@ -1,0 +1,26 @@
+City: houston_texas
+Number of zipcodes: 130
+
+Lasso Model Fit Statistics:
+R-squared                0.401545
+Adj. R-squared           0.328689
+MSE                      0.001656
+Best alpha               0.006805
+N observations         130.000000
+N selected features     14.000000
+
+OLS Model Fit Statistics:
+R-squared             5.481762e-01
+Adj. R-squared        4.931715e-01
+F-statistic           9.965999e+00
+Prob (F-statistic)    3.059042e-14
+N observations        1.300000e+02
+
+Significant Features (p < 0.05):
+                         variable  coefficient  p_value significance
+          CCTV Camera_counts_mean    -0.360442 0.000024          ***
+          Wheeled Slow_ratios_std     0.234073 0.003656           **
+   Traffic Sign Frame_ratios_mean     0.279302 0.000075          ***
+             Building_counts_mean     0.202273 0.025351            *
+Lane Marking - General_ratios_std    -0.143226 0.039329            *
+                   Bus_ratios_std     0.165593 0.019030            *

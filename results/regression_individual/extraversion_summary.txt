@@ -1,0 +1,47 @@
+Model Fit Statistics:
+R-squared              1.692377e-02
+Adj. R-squared         1.441116e-02
+F-statistic            6.735543e+00
+Prob (F-statistic)    5.164873e-220
+N observations         1.035570e+05
+Significant Street View Indicators (p < 0.05):
+                     variable  coefficient  p_value significance
+         Building_ratios_mean    -0.140166 0.039359            *
+     Utility Pole_ratios_mean     0.201396 0.024400            *
+             Pole_ratios_mean     0.224619 0.048924            *
+             Wall_ratios_mean     0.146058 0.016075            *
+            Fence_ratios_mean    -0.155385 0.025121            *
+            Truck_ratios_mean    -0.158380 0.021028            *
+    Traffic Light_ratios_mean    -0.227988 0.002973           **
+              Bus_ratios_mean    -0.134436 0.001166           **
+    Ground Animal_ratios_mean    -0.105610 0.045181            *
+             Curb_counts_mean    -0.246304 0.008568           **
+     Utility Pole_counts_mean    -0.174354 0.034722            *
+            Truck_counts_mean     0.198599 0.037171            *
+     Fire Hydrant_counts_mean     0.246658 0.041686            *
+             Boat_ratios_mean     0.162589 0.010924            *
+             Boat_counts_mean    -0.082743 0.004377           **
+      Ego Vehicle_counts_mean    -0.472231 0.004846           **
+      Phone Booth_ratios_mean    -0.161540 0.006686           **
+      Phone Booth_counts_mean     0.167799 0.001596           **
+Crosswalk - Plain_ratios_mean    -0.076386 0.010509            *
+          Building_ratios_std     0.151210 0.001738           **
+        Vegetation_ratios_std     0.092544 0.041997            *
+      Fire Hydrant_ratios_std     0.172809 0.021261            *
+     Traffic Light_ratios_std     0.030096 0.023805            *
+               Bus_ratios_std     0.073278 0.000025          ***
+             Water_ratios_std     0.061702 0.032577            *
+          Building_counts_std    -0.084844 0.002934           **
+              Curb_counts_std     0.080919 0.034701            *
+               Car_counts_std     0.178058 0.000870          ***
+        Guard Rail_counts_std     0.197477 0.004715           **
+      Fire Hydrant_counts_std    -0.258398 0.012198            *
+      Service Lane_counts_std     0.099424 0.030559            *
+   Pedestrian Area_counts_std    -0.245306 0.049145            *
+              Boat_ratios_std    -0.161850 0.009594           **
+              Boat_counts_std     0.067398 0.007659           **
+       Ego Vehicle_counts_std     0.198450 0.010017            *
+           Caravan_counts_std    -0.110052 0.010897            *
+       Phone Booth_ratios_std     0.102607 0.016526            *
+       Phone Booth_counts_std    -0.064605 0.024070            *
+ Crosswalk - Plain_ratios_std     0.074562 0.009581           **

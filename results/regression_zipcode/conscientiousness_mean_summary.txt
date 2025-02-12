@@ -1,0 +1,29 @@
+Model Fit Statistics:
+R-squared               0.870135
+Adj. R-squared          0.429943
+F-statistic             1.976715
+Prob (F-statistic)      0.000291
+N observations        339.000000
+Significant Street View Indicators (p < 0.05):
+                    variable  coefficient  p_value significance
+         Barrier_ratios_mean     2.908639 0.007901           **
+       Car Mount_ratios_mean    -0.866777 0.047057            *
+             Car_counts_mean     1.655628 0.033629            *
+         Barrier_counts_mean    -2.687401 0.047481            *
+          Banner_counts_mean    -1.557633 0.017387            *
+            Bird_counts_mean    -0.811269 0.041861            *
+    Wheeled Slow_ratios_mean     1.070528 0.009148           **
+         Caravan_counts_mean     1.016860 0.038023            *
+     Utility Pole_ratios_std    -0.601275 0.040830            *
+          Barrier_ratios_std    -1.195193 0.008715           **
+       Rail Track_ratios_std    -0.862109 0.031865            *
+           Bridge_ratios_std     0.972168 0.049422            *
+        Car Mount_ratios_std     0.721985 0.005493           **
+             Pole_counts_std     1.846868 0.004487           **
+        Billboard_counts_std     1.373666 0.016842            *
+     Junction Box_counts_std    -1.360484 0.041299            *
+           Banner_counts_std     0.866539 0.031692            *
+     Wheeled Slow_ratios_std    -0.633789 0.020144            *
+          Caravan_counts_std    -0.834239 0.035017            *
+        Bike Lane_ratios_std    -0.626212 0.018451            *
+Crosswalk - Plain_counts_std    -0.462158 0.043096            *

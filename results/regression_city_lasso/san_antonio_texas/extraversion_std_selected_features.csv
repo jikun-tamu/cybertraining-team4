@@ -1,0 +1,38 @@
+variable,coefficient
+Motorcycle_counts_std,-0.014653874572280423
+Person_counts_mean,0.01168744941173992
+Catch Basin_counts_mean,0.010473941801236843
+Truck_counts_std,0.009424086980761463
+Water_counts_std,0.009101130154027246
+Tunnel_ratios_std,-0.008430393751228463
+Boat_counts_mean,0.006620207903300201
+Motorcycle_ratios_std,-0.006001484757166019
+Phone Booth_ratios_mean,-0.0054506311167528765
+Billboard_counts_std,0.0053506677350303004
+Bicyclist_counts_mean,0.004992237702976819
+Vegetation_counts_mean,0.004605218181902824
+Car Mount_ratios_std,0.003396258772941122
+Pole_ratios_std,0.0028190881509119483
+Fire Hydrant_counts_mean,-0.002589202470187953
+Bird_ratios_mean,-0.0023498545370883228
+Crosswalk - Plain_ratios_std,-0.0022420160014737737
+Bridge_ratios_mean,-0.0021813557126095493
+Bike Lane_counts_std,-0.0021464964568774763
+Caravan_counts_std,0.0018299470014002822
+Other Rider_ratios_std,-0.0017503176289040592
+Terrain_ratios_std,0.0015869856934023349
+Bridge_counts_mean,-0.0012989102612398925
+Water_ratios_std,0.0012504815915340551
+Ground Animal_ratios_std,0.0011749488992807945
+Caravan_counts_mean,0.0011353573560535675
+Other Vehicle_ratios_std,-0.0008972883215800647
+Rail Track_ratios_std,0.0007837839294041139
+Trailer_counts_mean,-0.0007784400945225963
+On Rails_ratios_mean,-0.0005813788528514677
+Other Rider_ratios_mean,-0.0005253467378646985
+Car Mount_counts_std,0.0003808345435784024
+Bench_counts_mean,0.00020833081080600296
+Truck_ratios_std,0.00013073428513346483
+Billboard_ratios_std,0.00012744408352594467
+Traffic Sign Frame_ratios_mean,-7.038955097066348e-05
+Mountain_ratios_mean,-2.8574561601386158e-05

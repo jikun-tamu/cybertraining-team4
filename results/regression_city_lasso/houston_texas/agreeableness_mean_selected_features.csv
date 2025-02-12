@@ -1,0 +1,32 @@
+variable,coefficient
+Billboard_ratios_std,0.011368314549594626
+Other Vehicle_ratios_mean,-0.00721554935215587
+Caravan_ratios_mean,0.00677884128574468
+Fence_counts_mean,0.005169290674917209
+Junction Box_ratios_std,-0.005028824763062937
+Guard Rail_counts_std,-0.004461670670979532
+Motorcycle_counts_std,-0.004307280727822242
+Mailbox_counts_mean,0.0034504153031722695
+Banner_ratios_std,0.003392035020548169
+Junction Box_ratios_mean,-0.0028943854549619156
+Other Rider_counts_std,-0.002388194041995949
+Bench_ratios_mean,0.002335966557269634
+Terrain_ratios_std,-0.002090411558773016
+Traffic Sign Frame_counts_mean,0.001774430324310817
+Catch Basin_counts_mean,-0.0016702061132297108
+Banner_counts_std,-0.001194643041747283
+Other Rider_ratios_mean,-0.0011738984045306848
+Bus_counts_mean,0.0011648141817148581
+Caravan_counts_mean,0.001164090082259218
+Pothole_counts_mean,0.001114065168420517
+Road_ratios_std,-0.001036513311973272
+Bike Lane_ratios_std,-0.0009378989822106477
+Crosswalk - Plain_ratios_mean,0.0007050765762408263
+Wheeled Slow_ratios_mean,-0.00048112266242309755
+Bird_counts_mean,0.0004003875075820861
+CCTV Camera_ratios_mean,0.00039782490608915804
+Bike Rack_counts_mean,-0.0003841228035401715
+Fence_counts_std,0.0002602149034212208
+Water_ratios_std,-0.00023743579182338164
+Bird_ratios_mean,-7.307181490214124e-05
+Other Rider_ratios_std,-2.3933397870863947e-05

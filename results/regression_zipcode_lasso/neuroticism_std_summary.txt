@@ -1,0 +1,20 @@
+Lasso Model Fit Statistics:
+R-squared                0.189934
+Adj. R-squared           0.141534
+MSE                      0.000956
+Best alpha               0.002705
+N observations         338.000000
+N selected features     19.000000
+
+OLS Model Fit Statistics:
+R-squared             2.596423e-01
+Adj. R-squared        2.154071e-01
+F-statistic           5.869584e+00
+Prob (F-statistic)    1.193024e-12
+N observations        3.380000e+02
+
+Significant Features (p < 0.05):
+                         variable  coefficient  p_value significance
+Lane Marking - General_counts_std    -0.209009 0.000435          ***
+             Trash Can_ratios_std    -0.163311 0.020635            *
+                   Car_ratios_std    -0.176546 0.018880            *

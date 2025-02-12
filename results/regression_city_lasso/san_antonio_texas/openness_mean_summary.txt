@@ -1,0 +1,21 @@
+City: san_antonio_texas
+Number of zipcodes: 67
+
+Lasso Model Fit Statistics:
+R-squared               0.026209
+Adj. R-squared          0.011228
+MSE                     0.004177
+Best alpha              0.027399
+N observations         67.000000
+N selected features     1.000000
+
+OLS Model Fit Statistics:
+R-squared              0.201222
+Adj. R-squared         0.188933
+F-statistic           16.374285
+Prob (F-statistic)     0.000141
+N observations        67.000000
+
+Significant Features (p < 0.05):
+         variable  coefficient  p_value significance
+Banner_counts_std     0.448578 0.000141          ***

@@ -1,0 +1,19 @@
+Model Fit Statistics:
+R-squared               0.867607
+Adj. R-squared          0.412942
+F-statistic             1.908233
+Prob (F-statistic)      0.000570
+N observations        338.000000
+Significant Street View Indicators (p < 0.05):
+                   variable  coefficient  p_value significance
+       Building_ratios_mean    -3.147258 0.007502           **
+   Utility Pole_ratios_mean     1.791446 0.048077            *
+      Trash Can_ratios_mean    -2.035656 0.040655            *
+           Snow_ratios_mean     3.152061 0.042731            *
+            Bus_ratios_mean    -2.914235 0.016420            *
+     Vegetation_counts_mean    -1.278395 0.042422            *
+      Trash Can_counts_mean     2.571093 0.017990            *
+Pedestrian Area_counts_mean     5.333819 0.039850            *
+    Other Rider_ratios_mean    -1.306368 0.032687            *
+            Pole_counts_std    -1.435185 0.034849            *
+       Trash Can_counts_std    -1.739479 0.028277            *

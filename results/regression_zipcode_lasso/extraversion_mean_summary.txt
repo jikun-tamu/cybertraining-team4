@@ -1,0 +1,34 @@
+Lasso Model Fit Statistics:
+R-squared                0.594986
+Adj. R-squared           0.529571
+MSE                      0.002366
+Best alpha               0.002642
+N observations         339.000000
+N selected features     47.000000
+
+OLS Model Fit Statistics:
+R-squared             6.788538e-01
+Adj. R-squared        6.269848e-01
+F-statistic           1.308786e+01
+Prob (F-statistic)    1.440574e-48
+N observations        3.390000e+02
+
+Significant Features (p < 0.05):
+                        variable  coefficient      p_value significance
+Traffic Sign (Front)_ratios_mean     0.707853 2.665650e-13          ***
+                 Snow_counts_std    -0.170561 2.971279e-03           **
+             Mailbox_ratios_mean     0.146713 1.800061e-02            *
+              Terrain_counts_std    -0.239387 3.937033e-04          ***
+            Bike Lane_counts_std    -0.106206 2.805086e-02            *
+           Trash Can_ratios_mean    -0.269451 4.147249e-02            *
+            Bike Rack_ratios_std    -0.115424 1.908499e-03           **
+                 Sand_ratios_std     0.117787 3.546686e-02            *
+         Wheeled Slow_ratios_std     0.105250 1.320664e-02            *
+                Wall_counts_mean     0.251180 1.436758e-04          ***
+                Curb_ratios_mean    -0.216165 3.895700e-04          ***
+                Water_counts_std     0.096082 4.450137e-02            *
+             Building_counts_std    -0.176986 1.923022e-03           **
+           Guard Rail_counts_std     0.171880 1.927465e-03           **
+               Banner_ratios_std     0.076215 3.230438e-02            *
+         Utility Pole_ratios_std     0.147096 7.770748e-03           **
+Traffic Sign (Front)_counts_mean    -0.241664 9.804521e-03           **

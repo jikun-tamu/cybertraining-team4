@@ -1,0 +1,21 @@
+City: houston_texas
+Number of zipcodes: 130
+
+Lasso Model Fit Statistics:
+R-squared                0.000000
+Adj. R-squared          -0.007812
+MSE                      0.008269
+Best alpha               0.059466
+N observations         130.000000
+N selected features      1.000000
+
+OLS Model Fit Statistics:
+R-squared             4.276560e-01
+Adj. R-squared        4.231846e-01
+F-statistic           9.564173e+01
+Prob (F-statistic)    3.293308e-17
+N observations        1.300000e+02
+
+Significant Features (p < 0.05):
+                      variable  coefficient      p_value significance
+Traffic Sign Frame_ratios_mean     0.653954 3.293308e-17          ***

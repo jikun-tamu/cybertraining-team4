@@ -1,0 +1,21 @@
+City: dallas_texas
+Number of zipcodes: 86
+
+Lasso Model Fit Statistics:
+R-squared               0.054834
+Adj. R-squared          0.043446
+MSE                     0.002418
+Best alpha              0.020874
+N observations         85.000000
+N selected features     1.000000
+
+OLS Model Fit Statistics:
+R-squared              0.225157
+Adj. R-squared         0.215821
+F-statistic           24.118446
+Prob (F-statistic)     0.000004
+N observations        85.000000
+
+Significant Features (p < 0.05):
+              variable  coefficient  p_value significance
+CCTV Camera_counts_std    -0.474507 0.000004          ***

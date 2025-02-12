@@ -1,0 +1,24 @@
+variable,coefficient
+CCTV Camera_counts_mean,0.006121533881910215
+Motorcyclist_counts_mean,-0.005672463464054092
+Parking_counts_mean,-0.0032805671192484547
+Lane Marking - General_counts_mean,-0.0026961787134802
+Water_ratios_std,-0.0026946670481100107
+Road_counts_std,0.0026000620952284373
+Curb Cut_ratios_mean,-0.0022675591588207826
+Other Vehicle_counts_mean,0.0020979315414243463
+Bike Lane_counts_std,-0.001790178183089931
+Vegetation_ratios_mean,-0.0016673807451898907
+Car Mount_counts_std,-0.001340481078245988
+Guard Rail_counts_std,-0.0011053672648611444
+Truck_counts_std,0.000907810305029447
+Mailbox_ratios_mean,0.0008657706328032537
+Bicyclist_counts_mean,-0.0006963710609418641
+Lane Marking - General_counts_std,-0.000643148586102185
+Rail Track_ratios_std,0.0006079125044547529
+Street Light_counts_mean,0.0005997621140845338
+Traffic Sign Frame_ratios_mean,-0.00039013024805388026
+Bike Lane_counts_mean,-0.0003858170714879475
+Mountain_ratios_mean,-0.00034815779467876245
+Lane Marking - Crosswalk_counts_std,-0.000254901002399393
+Terrain_counts_std,-0.00021710341468100637

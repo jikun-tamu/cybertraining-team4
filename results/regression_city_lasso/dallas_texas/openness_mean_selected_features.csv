@@ -1,0 +1,24 @@
+variable,coefficient
+CCTV Camera_ratios_std,-0.01964145540989608
+On Rails_ratios_std,0.0157193413668029
+Caravan_ratios_mean,0.0124668063213532
+Bicyclist_counts_std,0.010072651374119024
+Crosswalk - Plain_counts_mean,0.007356756283967256
+Bench_counts_mean,0.007076015122086534
+Truck_ratios_mean,0.0062921167846839415
+Person_ratios_mean,-0.00613822455709199
+Banner_counts_mean,-0.004963005460507388
+Banner_ratios_std,0.0048571458817101365
+Rail Track_ratios_mean,-0.004625114885687316
+Guard Rail_ratios_mean,0.004531338731889052
+Boat_ratios_mean,-0.004422562339272759
+Ground Animal_ratios_mean,-0.004282593088036353
+Traffic Sign (Front)_ratios_mean,0.003448822700548357
+Junction Box_ratios_mean,-0.003004834143703244
+Traffic Sign (Front)_counts_std,0.0025419419536618494
+Motorcyclist_ratios_mean,0.0023341925202719814
+Water_counts_std,-0.0021199421770213087
+Traffic Sign Frame_ratios_std,0.0017601502357616529
+Bird_counts_mean,-0.0014366467376150712
+Other Rider_counts_mean,-0.0009967921241741948
+Ground Animal_counts_mean,-0.0003190490315323792

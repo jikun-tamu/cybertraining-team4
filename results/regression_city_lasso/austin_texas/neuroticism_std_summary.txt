@@ -1,0 +1,21 @@
+City: austin_texas
+Number of zipcodes: 57
+
+Lasso Model Fit Statistics:
+R-squared               0.035464
+Adj. R-squared          0.017927
+MSE                     0.001217
+Best alpha              0.017289
+N observations         57.000000
+N selected features     1.000000
+
+OLS Model Fit Statistics:
+R-squared              0.272273
+Adj. R-squared         0.259042
+F-statistic           20.577804
+Prob (F-statistic)     0.000031
+N observations        57.000000
+
+Significant Features (p < 0.05):
+       variable  coefficient  p_value significance
+Road_counts_std     0.521798 0.000031          ***

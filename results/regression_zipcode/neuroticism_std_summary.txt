@@ -1,0 +1,23 @@
+Model Fit Statistics:
+R-squared               0.853398
+Adj. R-squared          0.349938
+F-statistic             1.695065
+Prob (F-statistic)      0.003648
+N observations        338.000000
+Significant Street View Indicators (p < 0.05):
+                      variable  coefficient  p_value significance
+       Catch Basin_ratios_mean     1.013010 0.042981            *
+           Manhole_ratios_mean     5.344527 0.011309            *
+            Bridge_ratios_mean     1.634107 0.037911            *
+             Bench_ratios_mean     1.909297 0.033228            *
+        Motorcycle_counts_mean     3.533460 0.025078            *
+             Bench_counts_mean    -2.392212 0.015677            *
+         Bicyclist_ratios_mean    -1.274033 0.039926            *
+         Bike Rack_ratios_mean    -1.355564 0.045143            *
+Traffic Sign (Back)_ratios_std     0.498302 0.032881            *
+            Manhole_ratios_std    -1.489464 0.035107            *
+             Bridge_ratios_std    -1.338451 0.007003           **
+             Tunnel_ratios_std     2.286686 0.017022            *
+             Bridge_counts_std     1.288433 0.033994            *
+ Traffic Sign Frame_counts_std     1.193138 0.042195            *
+          Bike Lane_counts_std    -0.626580 0.032544            *

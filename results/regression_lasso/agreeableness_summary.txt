@@ -1,0 +1,21 @@
+
+Model Fit Statistics:
+R-squared             5.964808e-03
+Adj. R-squared        5.458967e-03
+F-statistic           1.179186e+01
+Prob (F-statistic)    2.459350e-98
+N observations        1.042050e+05
+Significant Street View Indicators (p < 0.05):
+            variable  coefficient  p_value significance
+    Billboard_counts     0.022746 0.000012          ***
+      Bicycle_counts    -0.021239 0.003184           **
+      Mailbox_counts     0.017441 0.000133          ***
+  Catch Basin_counts    -0.021315 0.000064          ***
+Other Vehicle_ratios    -0.026010 0.000227          ***
+ Utility Pole_counts     0.012677 0.010689            *
+  Other Rider_counts    -0.014913 0.000048          ***
+Ground Animal_ratios    -0.011440 0.003589           **
+ Junction Box_ratios    -0.016676 0.008284           **
+         Boat_counts     0.011800 0.001872           **
+      Parking_ratios    -0.008216 0.036439            *
+          Bus_counts     0.017126 0.026946            *

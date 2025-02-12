@@ -1,0 +1,5 @@
+variable,coefficient
+Road_counts_std,-0.004392157571890504
+Rail Track_ratios_std,-0.0035351542494471183
+CCTV Camera_ratios_mean,-0.0023960099839628593
+Sidewalk_ratios_std,-0.00021853986333416643

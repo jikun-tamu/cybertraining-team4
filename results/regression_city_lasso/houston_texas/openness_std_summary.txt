@@ -1,0 +1,23 @@
+City: houston_texas
+Number of zipcodes: 130
+
+Lasso Model Fit Statistics:
+R-squared                0.466039
+Adj. R-squared           0.355216
+MSE                      0.000598
+Best alpha               0.002890
+N observations         129.000000
+N selected features     22.000000
+
+OLS Model Fit Statistics:
+R-squared             5.681350e-01
+Adj. R-squared        4.785027e-01
+F-statistic           6.338504e+00
+Prob (F-statistic)    2.449654e-11
+N observations        1.290000e+02
+
+Significant Features (p < 0.05):
+              variable  coefficient  p_value significance
+Rail Track_counts_mean     0.242495 0.009172           **
+ Car Mount_ratios_mean    -0.239861 0.000805          ***
+    Trailer_ratios_std     0.296629 0.000858          ***

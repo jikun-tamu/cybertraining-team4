@@ -1,0 +1,23 @@
+Model Fit Statistics:
+R-squared              1.358042e-02
+Adj. R-squared         1.105927e-02
+F-statistic            5.386595e+00
+Prob (F-statistic)    2.301987e-156
+N observations         1.035570e+05
+Significant Street View Indicators (p < 0.05):
+                      variable  coefficient  p_value significance
+Traffic Sign Frame_ratios_mean    -0.097376 0.031862            *
+               Bus_ratios_mean    -0.108839 0.008678           **
+     Ground Animal_ratios_mean    -0.112636 0.032958            *
+          Building_counts_mean     0.102416 0.027440            *
+          Sidewalk_counts_mean     0.209745 0.049831            *
+              Bird_counts_mean    -0.102104 0.024364            *
+       Other Rider_counts_mean    -0.077821 0.032368            *
+         Bike Lane_counts_mean    -0.075867 0.032391            *
+         Vegetation_ratios_std     0.090378 0.047414            *
+               Sand_ratios_std     0.162279 0.028071            *
+                Bus_ratios_std     0.054841 0.001625           **
+      Ground Animal_ratios_std     0.091219 0.038773            *
+         Guard Rail_counts_std     0.159515 0.022681            *
+               Bird_counts_std     0.109471 0.022774            *
+        Other Rider_counts_std     0.075474 0.007554           **

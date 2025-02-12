@@ -1,0 +1,18 @@
+variable,coefficient
+Mountain_ratios_std,0.004818598921277581
+Sand_ratios_std,-0.003042548008085152
+Person_counts_mean,0.0028525839269026385
+Trash Can_ratios_std,-0.0027552103706651922
+Ego Vehicle_ratios_std,-0.002106904281154412
+Pedestrian Area_ratios_std,-0.001329238826503384
+Street Light_counts_mean,0.0011986452113659227
+On Rails_counts_mean,-0.001139915278105493
+Car_ratios_mean,-0.001063085802750198
+Traffic Sign Frame_counts_std,-0.0009969698364562314
+Utility Pole_ratios_std,-0.0009668064986592289
+Crosswalk - Plain_ratios_mean,0.0009441659515520405
+Bicyclist_ratios_mean,-0.0004338447749473015
+Bus_ratios_mean,0.000345800721199817
+Sand_ratios_mean,-0.00033687998986006403
+Other Rider_ratios_std,0.0003344903124673602
+Motorcyclist_counts_std,-6.716513404439132e-05

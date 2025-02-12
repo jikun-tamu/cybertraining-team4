@@ -1,0 +1,21 @@
+City: dallas_texas
+Number of zipcodes: 86
+
+Lasso Model Fit Statistics:
+R-squared               0.000000
+Adj. R-squared         -0.012048
+MSE                     0.004982
+Best alpha              0.024747
+N observations         85.000000
+N selected features     1.000000
+
+OLS Model Fit Statistics:
+R-squared              0.122929
+Adj. R-squared         0.112362
+F-statistic           11.633208
+Prob (F-statistic)     0.001003
+N observations        85.000000
+
+Significant Features (p < 0.05):
+                variable  coefficient  p_value significance
+Ground Animal_counts_std     0.350613 0.001003           **

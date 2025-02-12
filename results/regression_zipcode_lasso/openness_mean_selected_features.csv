@@ -1,0 +1,37 @@
+variable,coefficient
+CCTV Camera_counts_std,-0.015667021093132106
+Utility Pole_ratios_std,0.006581019549576053
+Wheeled Slow_ratios_std,0.006393468535736667
+Traffic Sign (Front)_ratios_mean,0.006173890177156175
+On Rails_ratios_std,0.005690534016938196
+Building_counts_std,-0.005379734164692726
+Traffic Sign Frame_counts_std,0.005142311366408106
+Rail Track_ratios_std,-0.004895213833217063
+Guard Rail_ratios_mean,0.004430043681314966
+Bus_counts_std,0.004075667572735357
+Rail Track_counts_std,-0.003952329708834588
+Fire Hydrant_counts_std,0.0035945477864925833
+Curb Cut_ratios_std,0.0029293729570576414
+Truck_ratios_std,0.002885421558707456
+Water_ratios_std,0.0028606228093848115
+Caravan_counts_std,0.0024838159000865763
+Lane Marking - General_ratios_std,-0.002408377888771123
+Car Mount_counts_std,0.002282987359540879
+visual_complexity_mean,0.0021708102512243313
+Snow_counts_std,-0.0020757641299498425
+Vegetation_ratios_std,0.0017591738421243684
+Trailer_counts_std,0.00167585118236541
+Wheeled Slow_counts_std,0.0015783283154717001
+Motorcyclist_counts_std,0.0014584239535089115
+Ground Animal_ratios_mean,-0.0013394867396588584
+Truck_ratios_mean,0.0013219073071611344
+Catch Basin_ratios_mean,-0.0012677698454206163
+Sand_counts_std,0.0011358211223315014
+Traffic Sign Frame_ratios_std,0.0009236575219285014
+Barrier_counts_std,-0.0008984184599379884
+Other Rider_counts_mean,-0.0008288005719521316
+Banner_counts_std,0.0006108580156996903
+Traffic Sign (Front)_ratios_std,0.00046061253823605154
+Fire Hydrant_ratios_std,0.00041460384689178575
+Traffic Sign (Back)_ratios_std,-0.0002763941594488524
+Traffic Sign (Front)_counts_std,8.88395439277976e-05
