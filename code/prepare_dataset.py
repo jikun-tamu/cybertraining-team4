@@ -6,12 +6,18 @@ import pyreadstat
 import numpy as np
 from tqdm import tqdm
 from big_five_analysis import calculate_personality_scores_vectorized
+import pandas as pd
+from shapely.ops import unary_union
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
 
 # Configuration
 DATA_DIR = Path("/media/data/personality")
 WORKSPACE_DIR = Path(os.getcwd())
 RAW_DATA_DIR = WORKSPACE_DIR / "data/raw"
 PROCESSED_DATA_DIR = WORKSPACE_DIR / "data/processed"
+SEGMENTATION_DIR = PROCESSED_DATA_DIR / "segmentation"
+DETECTION_DIR = PROCESSED_DATA_DIR / "detection"
 CHECKPOINT_DIR = WORKSPACE_DIR / "data/checkpoints"
 FINAL_INDIVIDUAL_DATA_PATH = WORKSPACE_DIR / "data/processed/model/final_dataset_individual.parquet"
 FINAL_ZIPCODE_DATA_PATH = WORKSPACE_DIR / "data/processed/model/final_dataset_zipcode.parquet"
@@ -73,8 +79,59 @@ def process_gsv_metadata():
     
     return load_or_create_checkpoint(checkpoint_path, _create_gsv_metadata)
 
+def process_zipcode_year(zipcode, year, gdf_metrics, gdf_zipcodes):
+    """Process a single zipcode-year combination for spatial metrics"""
+    # Get zipcode polygon
+    zipcode_polygon = gdf_zipcodes[gdf_zipcodes['ZCTA5CE10'] == zipcode].iloc[0].geometry
+    zipcode_area = zipcode_polygon.area  # in square degrees, will convert later if needed
+    
+    # Filter points for this zipcode and year
+    if year is not None:
+        zip_year_points = gdf_metrics[(gdf_metrics['zipcode'] == zipcode) & 
+                                     (gdf_metrics['gsv_year'] == year)]
+    else:
+        zip_year_points = gdf_metrics[gdf_metrics['zipcode'] == zipcode]
+    
+    # Skip if no points
+    if len(zip_year_points) == 0:
+        return (zipcode, year), None
+    
+    # Number of points
+    point_count = len(zip_year_points)
+    
+    # Density (points per square unit)
+    density = point_count / zipcode_area
+    
+    # Spatial coverage
+    if point_count > 0:
+        # Create a buffer of 100 meters around each point
+        # First convert to a projected CRS for accurate buffer
+        zip_year_points_proj = zip_year_points.to_crs('EPSG:3857')  # Web Mercator
+        buffered_points = zip_year_points_proj.buffer(100)  # 100 meter buffer
+        
+        # Calculate union of all buffers
+        coverage_area = unary_union(buffered_points)
+        
+        # Convert back to original CRS for comparison with zipcode
+        coverage_area = gpd.GeoSeries([coverage_area]).set_crs('EPSG:3857').to_crs(gdf_zipcodes.crs)[0]
+        
+        # Calculate area and percentage
+        coverage_ratio = coverage_area.intersection(zipcode_polygon).area / zipcode_polygon.area
+    else:
+        coverage_ratio = 0.0
+
+    # Return metrics
+    return (zipcode, year), {
+        'point_count': point_count,
+        'density': density,
+        'coverage_ratio': coverage_ratio
+    }
+
 def spatial_join_gsv_zipcodes(df_gsv, gdf_zipcodes):
-    """Perform spatial join between GSV points and zipcode polygons"""
+    """
+    Perform spatial join between GSV points and zipcode polygons
+    with temporal matching (+/- 2 years buffer)
+    """
     checkpoint_path = CHECKPOINT_DIR / "gsv_with_zipcodes.parquet"
     
     def _create_spatial_join(df_gsv=df_gsv, gdf_zipcodes=gdf_zipcodes):
@@ -94,9 +151,104 @@ def spatial_join_gsv_zipcodes(df_gsv, gdf_zipcodes):
         gdf_joined = gpd.sjoin(gdf_gsv, gdf_zipcodes[['ZCTA5CE10', 'geometry']], 
                               how='left', predicate='within')
         
-        # Convert back to Polars DataFrame
+        # Already rename the zipcode column in the GeoDataFrame before making a copy
+        gdf_joined = gdf_joined.rename(columns={'ZCTA5CE10': 'zipcode'})
+        
+        # Create a copy of the GeoDataFrame for spatial calculations
+        gdf_metrics = gdf_joined.copy()
+        
+        # Filter only rows with valid zipcodes
+        gdf_metrics = gdf_metrics[~gdf_metrics['zipcode'].isna()]
+        
+        # Convert back to Polars DataFrame (after making the copy for metrics)
         df_joined = pl.from_pandas(gdf_joined.drop(columns=['geometry', 'index_right']))
-        return df_joined.rename({'ZCTA5CE10': 'zipcode'})
+        
+        # Extract year from date column (assuming 'date' exists in the GSV data)
+        # If 'date' column doesn't exist in your dataframe, you'll need to create or derive it
+        if 'date' in df_joined.columns:
+            df_joined = df_joined.with_columns(pl.col('date').dt.year().alias('gsv_year'))
+        elif 'year' in df_joined.columns:
+            df_joined = df_joined.rename({'year': 'gsv_year'})
+        else:
+            # If neither date nor year exists, you might need to extract from another field
+            # This is a placeholder - adjust according to your actual data
+            print("Warning: No date/year column found in GSV data. Temporal matching will not be possible.")
+            df_joined = df_joined.with_columns(pl.lit(None).cast(pl.Int32).alias('gsv_year'))
+            
+            # Also add the year column to the metrics geodataframe
+            gdf_metrics['gsv_year'] = None
+        
+        # Add year column to gdf_metrics if it exists in df_joined
+        if 'gsv_year' in df_joined.columns and 'gsv_year' not in gdf_metrics.columns:
+            # Convert from polars to pandas for consistency with gdf_metrics
+            years_dict = df_joined.select(['panoid', 'gsv_year']).to_pandas().set_index('panoid')['gsv_year'].to_dict()
+            gdf_metrics['gsv_year'] = gdf_metrics['panoid'].map(years_dict)
+        
+        # Calculate spatial metrics for each zipcode
+        print("Calculating spatial coverage metrics...")
+        
+        # Create empty dictionary to store metrics
+        zipcode_metrics = {}
+        
+        # Get unique zipcodes and years
+        zipcodes = gdf_metrics['zipcode'].unique()
+        gsv_years = gdf_metrics['gsv_year'].dropna().unique() if 'gsv_year' in gdf_metrics.columns else [None]
+        
+        # Create list of all zipcode-year combinations to process
+        zipcode_year_combinations = []
+        for zipcode in zipcodes:
+            for year in gsv_years:
+                zipcode_year_combinations.append((zipcode, year))
+        
+        # Determine number of workers (use fewer than all cores to avoid system overload)
+        max_workers = max(1, min(multiprocessing.cpu_count() - 1, 16))
+        print(f"Processing with {max_workers} workers...")
+        
+        # Process zipcode-year combinations in parallel
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            # Submit tasks
+            future_to_combo = {
+                executor.submit(process_zipcode_year, zipcode, year, gdf_metrics, gdf_zipcodes): 
+                (zipcode, year) for zipcode, year in zipcode_year_combinations
+            }
+            
+            # Process results as they complete
+            for future in tqdm(as_completed(future_to_combo), 
+                               total=len(zipcode_year_combinations),
+                               desc="Calculating metrics by zipcode-year"):
+                key, result = future.result()
+                if result is not None:
+                    zipcode_metrics[key] = result
+        
+        # Convert metrics to DataFrame
+        metrics_rows = []
+        for (zipcode, year), metrics in zipcode_metrics.items():
+            if metrics is not None:
+                metrics_rows.append({
+                    'zipcode': zipcode,
+                    'gsv_year': year,
+                    'gsv_point_count': metrics['point_count'],
+                    'gsv_density': metrics['density'],
+                    'gsv_coverage_ratio': metrics['coverage_ratio']
+                })
+        
+        df_metrics = pl.from_pandas(pd.DataFrame(metrics_rows))
+        
+        # Join metrics back to the original dataframe
+        if 'gsv_year' in df_joined.columns:
+            join_keys = ['zipcode', 'gsv_year']
+        else:
+            join_keys = ['zipcode']
+            
+        # Ensure metrics dataframe has the right schema for the join
+        if len(metrics_rows) > 0:
+            df_joined = df_joined.join(
+                df_metrics,
+                on=join_keys,
+                how='left'
+            )
+        
+        return df_joined
     
     return load_or_create_checkpoint(checkpoint_path, _create_spatial_join)
 
@@ -107,7 +259,7 @@ def process_segmentation_results():
     def _create_segmentation_results():
         results_dfs = []
         
-        for city_dir in PROCESSED_DATA_DIR.glob("*"):
+        for city_dir in SEGMENTATION_DIR.glob("*"):
             if not city_dir.is_dir():
                 continue
                 
@@ -184,10 +336,26 @@ def shannon_index(ratios):
     return -(normalized * np.log(normalized)).sum()
 
 def aggregate_by_zipcode(df_gsv_with_zipcode, df_segments):
-    """Aggregate segmentation results by zipcode"""
+    """
+    Aggregate segmentation results by zipcode with temporal matching to survey data
+    """
     checkpoint_path = CHECKPOINT_DIR / "segment_stats_by_zipcode.parquet"
     
     def _create_aggregation():
+        # Load survey data to get years
+        survey_data = load_survey_data()
+        
+        # Extract years from survey data (assuming there's a year column)
+        # Adjust this based on your actual survey data structure
+        if 'year' in survey_data.columns:
+            survey_years = survey_data['year'].unique().to_list()
+        elif 'date' in survey_data.columns:
+            survey_years = survey_data.select(pl.col('date').dt.year()).unique().to_list()
+        else:
+            # If no year information in survey, use a reasonable default range
+            print("Warning: No year information found in survey data. Using all available GSV years.")
+            survey_years = None
+        
         # Merge GSV metadata with segmentation results
         df_merged = df_gsv_with_zipcode.join(df_segments, left_on='panoid', right_on='filename_key')
         
@@ -203,8 +371,69 @@ def aggregate_by_zipcode(df_gsv_with_zipcode, df_segments):
                        and col != 'filename_key']
         numeric_cols.append('visual_complexity')
         
-        # Group by zipcode and aggregate mean and std
-        print("  Aggregating statistics by zipcode...")
+        # Add the new spatial metrics columns if they exist
+        spatial_metrics = ['gsv_point_count', 'gsv_density', 'gsv_coverage_ratio']
+        for metric in spatial_metrics:
+            if metric in df_merged.columns:
+                if metric not in numeric_cols:
+                    numeric_cols.append(metric)
+        
+        # If we have survey years and GSV years, we'll create year-specific aggregations
+        year_specific_dfs = []
+        
+        if 'gsv_year' in df_merged.columns and survey_years is not None:
+            print("  Creating year-matched aggregations...")
+            
+            # For each survey year, find GSV data within +/- 2 years
+            for survey_year in tqdm(survey_years, desc="Processing survey years"):
+                # Filter GSV data to +/- 2 years of survey year
+                year_min = survey_year - 2
+                year_max = survey_year + 2
+                
+                df_year_filtered = df_merged.filter(
+                    (pl.col('gsv_year') >= year_min) & 
+                    (pl.col('gsv_year') <= year_max)
+                )
+                
+                # Skip if no data for this year range
+                if len(df_year_filtered) == 0:
+                    print(f"  No GSV data found within +/- 2 years of survey year {survey_year}")
+                    continue
+                
+                # Group by zipcode and aggregate
+                agg_exprs = [
+                    pl.col('panoid').count().alias('image_count'),
+                    pl.lit(survey_year).alias('survey_year'),
+                    # Take the most common city for each zipcode
+                    pl.col('city').mode().first().alias('city')
+                ]
+                
+                # Add mean expressions for numeric columns
+                agg_exprs.extend([
+                    pl.col(col).mean().alias(f"{col}_mean") 
+                    for col in numeric_cols
+                ])
+                
+                # Add std expressions for numeric columns
+                agg_exprs.extend([
+                    pl.col(col).std(ddof=1).cast(pl.Float64).alias(f"{col}_std")
+                    for col in numeric_cols
+                ])
+                
+                # Aggregate for this year range
+                df_year_agg = df_year_filtered.groupby('zipcode').agg(agg_exprs)
+                year_specific_dfs.append(df_year_agg)
+        
+        # If we have year-specific dataframes, concatenate them
+        if year_specific_dfs:
+            df_zipcode_years = pl.concat(year_specific_dfs)
+            
+            print(f"  Created year-matched dataset with {len(df_zipcode_years)} zipcode-year combinations")
+            
+            # Also create an aggregated version without year matching for backward compatibility
+            print("  Creating overall aggregation for backward compatibility...")
+        
+        # Standard aggregation without year matching (for backward compatibility)
         agg_exprs = [
             pl.col('panoid').count().alias('image_count'),
             # Take the most common city for each zipcode
@@ -217,18 +446,26 @@ def aggregate_by_zipcode(df_gsv_with_zipcode, df_segments):
             for col in numeric_cols
         ])
         
-        # Add std expressions - ensure we get single values
+        # Add std expressions
         agg_exprs.extend([
             pl.col(col).std(ddof=1).cast(pl.Float64).alias(f"{col}_std")
             for col in numeric_cols
         ])
         
-        return df_merged.groupby('zipcode').agg(agg_exprs)
+        df_zipcode_overall = df_merged.groupby('zipcode').agg(agg_exprs)
+        
+        # Return appropriate dataframe(s)
+        if year_specific_dfs:
+            # Save both versions
+            df_zipcode_years.write_parquet(CHECKPOINT_DIR / "segment_stats_by_zipcode_years.parquet")
+            return df_zipcode_years  # Return the year-matched version as primary
+        else:
+            return df_zipcode_overall
     
     return load_or_create_checkpoint(checkpoint_path, _create_aggregation)
 
 def create_final_dataset(df_survey, df_segment_stats):
-    """Create final datasets at both individual and zipcode levels"""
+    """Create final datasets at both individual and zipcode levels with temporal matching"""
     print("Creating final datasets...")
     
     # Calculate Big Five personality traits
@@ -243,14 +480,50 @@ def create_final_dataset(df_survey, df_segment_stats):
     # Add Big Five traits to survey data
     df_combined = df_survey.hstack(df_big_five)
     
-    # Merge with street view indicators based on now_zip
+    # Check if we have year-specific segment stats
+    has_temporal_data = 'survey_year' in df_segment_stats.columns
+    
+    # Extract survey years from record_time column if available
+    if 'record_time' in df_survey.columns:
+        print("  Extracting year from record_time column...")
+        # First, fix any potential year format issues (like " 200" for year 2000)
+        df_combined = df_combined.with_columns(
+            pl.col('record_time').str.replace(r' 200\b', ' 2000').alias('fixed_record_time')
+        )
+        # Then extract the year from the fixed date string
+        df_combined = df_combined.with_columns(
+            pl.col('fixed_record_time').str.extract(r'(\d{4})').cast(pl.Int32).alias('survey_year')
+        )
+        survey_year_column = 'survey_year'
+    elif 'year' in df_survey.columns:
+        df_combined = df_combined.with_columns(pl.col('year').alias('survey_year'))
+        survey_year_column = 'survey_year'
+    elif 'date' in df_survey.columns:
+        df_combined = df_combined.with_columns(pl.col('date').dt.year().alias('survey_year'))
+        survey_year_column = 'survey_year'
+    else:
+        survey_year_column = None
+    
+    # Merge with street view indicators
     print("  Merging with street view indicators...")
-    df_individual = df_combined.join(
-        df_segment_stats,
-        left_on='now_zip',
-        right_on='zipcode',
-        how='inner'  # Only keep rows with both personality and street view data
-    )
+    
+    if has_temporal_data and survey_year_column:
+        print("  Using temporal matching for merging...")
+        # Merge on both zipcode and year
+        df_individual = df_combined.join(
+            df_segment_stats,
+            left_on=['now_zip', survey_year_column],
+            right_on=['zipcode', 'survey_year'],
+            how='inner'  # Only keep rows with both personality and street view data
+        )
+    else:
+        # Fallback to original merging strategy
+        df_individual = df_combined.join(
+            df_segment_stats,
+            left_on='now_zip',
+            right_on='zipcode',
+            how='inner'  # Only keep rows with both personality and street view data
+        )
     
     # Drop rows with missing Big Five indicators
     big_five_traits = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness']
@@ -263,25 +536,52 @@ def create_final_dataset(df_survey, df_segment_stats):
     print("  Creating zipcode level dataset...")
     
     # First, aggregate personality traits by zipcode
-    df_zipcode = df_individual.groupby('now_zip').agg([
+    if has_temporal_data and survey_year_column:
+        # Group by both zipcode and year
+        groupby_cols = ['now_zip', survey_year_column]
+    else:
+        groupby_cols = ['now_zip']
+    
+    agg_exprs = [
         pl.col('now_zip').count().alias('participant_count'),
         *[pl.col(trait).mean().alias(f"{trait}_mean") for trait in big_five_traits],
         *[pl.col(trait).std().alias(f"{trait}_std") for trait in big_five_traits]
-    ])
+    ]
+    
+    df_zipcode = df_individual.groupby(groupby_cols).agg(agg_exprs)
     
     # Then join with the pre-aggregated segmentation statistics
-    df_zipcode = df_zipcode.join(
-        df_segment_stats.select([
-            pl.col('zipcode'),
-            *[pl.col(col) for col in df_segment_stats.columns if col != 'zipcode']
-        ]),
-        left_on='now_zip',
-        right_on='zipcode',
-        how='left'
-    )
+    if has_temporal_data and survey_year_column:
+        # If we have temporal data, join on both zipcode and year
+        df_zipcode = df_zipcode.join(
+            df_segment_stats.select([
+                pl.col('zipcode'),
+                pl.col('survey_year'),
+                *[pl.col(col) for col in df_segment_stats.columns 
+                  if col not in ['zipcode', 'survey_year']]
+            ]),
+            left_on=['now_zip', survey_year_column],
+            right_on=['zipcode', 'survey_year'],
+            how='left'
+        )
+    else:
+        # Otherwise, join just on zipcode
+        df_zipcode = df_zipcode.join(
+            df_segment_stats.select([
+                pl.col('zipcode'),
+                *[pl.col(col) for col in df_segment_stats.columns if col != 'zipcode']
+            ]),
+            left_on='now_zip',
+            right_on='zipcode',
+            how='left'
+        )
     
     print(f"  Zipcode dataset shape: {df_zipcode.shape}")
-    print(f"  Number of unique zipcodes: {len(df_zipcode)}")
+    if has_temporal_data:
+        print(f"  Number of unique zipcode-year combinations: {len(df_zipcode)}")
+        print(f"  Number of unique zipcodes: {df_zipcode['now_zip'].n_unique()}")
+    else:
+        print(f"  Number of unique zipcodes: {len(df_zipcode)}")
     
     return df_individual, df_zipcode
 
