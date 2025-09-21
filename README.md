@@ -1,100 +1,45 @@
-# Personality and Urban Environment Analysis
+<<<<<<< HEAD
+# cybertraining-team4
+Assessing Disaster Impact Through Streamlining Multimodal Geospatial Data with Building Damage Prediction and Demographic Attributes
 
-This project analyzes the relationship between personality traits and urban environmental characteristics using street view imagery and survey data.
+## Natural Disaster Case Studies for Model Testing and Validation
 
-## Prerequisites
+This repository examines recent U.S. disasters to test and validate model performance across varied physical processes and socio-demographic contexts.
 
-- Python 3.8+
-- Required Python packages (install using `pip install -r requirements.txt`)
+### Case Studies
 
-## Setup
+#### 1. 2025 Southern California Wildfires
+- Among the most destructive in U.S. history  
+- Severe wildland–urban interface losses and unprecedented damages  
 
-1. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### 2. 2024 Hurricane Helene (Northwestern North Carolina)
+- Catastrophic inland flooding in the Appalachians  
+- Most fatalities occurred far from the coast  
 
-2. Prepare data directories:
-   ```bash
-   mkdir -p data/{raw,processed}
-   ```
+#### 3. 2023 Midwest Tornado Outbreak (Greenfield, Iowa)
+- Multi-day outbreak of high-intensity tornadoes  
+- Greenfield tornado recorded near-historic wind speeds
 
-## Data Structure
-
-The script expects the following data structure:
+## Repository Structure
 
 ```
-/media/data/personality/
-├── OOS Master Dataset Sept 2022/
-│   └── 00_OOS_MASTER DATASET_2022_08_22.sav
-└── cb_2016_us_zcta510_500k/
-    └── cb_2016_us_zcta510_500k.shp
-
-./data/
-├── raw/
-│   ├── city1/
-│   │   └── gsv_pids.csv
-│   ├── city2/
-│   │   └── gsv_pids.csv
-│   └── ...
-└── processed/
-    ├── city1/
-    │   ├── batch_1/
-    │   │   ├── label_counts.csv
-    │   │   └── pixel_ratios.csv
-    │   └── ...
-    └── ...
+├── validation_case.ipynb          # Main analysis notebook for disaster case studies
+├── data/
+│   ├── raw/                       # Raw downloaded data
+│   ├── interim/                   # Intermediate processed data
+│   └── derived/                   # Final analysis-ready datasets
+└── 250812_CyberTraining_Team4/    # Project workspace
 ```
 
-## Usage
+## Getting Started
 
-Run the data preparation script:
-```bash
-python code/prepare_dataset.py
-```
-
-This will:
-1. Create a SQLite database
-2. Load and process all data sources
-3. Perform spatial join between GSV points and zipcodes
-4. Aggregate environmental features by zipcode
-5. Save all data to the database
-
-## Output
-
-The script creates a SQLite database (`data/personality.db`) with the following structure:
-
-- Tables:
-  - `survey_data`: Complete personality survey responses
-  - `gsv_panoramas`: Street view image locations with zipcode information
-  - `segmentation_results`: Raw image segmentation results with both pixel ratios and label counts
-  - `segment_stats_by_zipcode`: Environmental features aggregated by zipcode
-
-The `segment_stats_by_zipcode` table includes:
-- `zipcode`: ZIP Code Tabulation Area (ZCTA)
-- `image_count`: Number of street view images in the zipcode
-- Average values for all segmentation metrics:
-  - Pixel ratios (suffix: `_ratios`)
-  - Label counts (suffix: `_counts`)
-
-## Analysis
-
-After running the preparation script, you can query the database for analysis. Example queries:
-
-```sql
--- Get environmental characteristics for a participant's youth residence
-SELECT s.*, g.*
-FROM survey_data s
-JOIN segment_stats_by_zipcode g ON s.youth_zip = g.zipcode;
-
--- Compare youth and current environment characteristics
-SELECT 
-    s.record_id,
-    y.building_ratios as youth_building,
-    c.building_ratios as current_building,
-    y.vegetation_ratios as youth_vegetation,
-    c.vegetation_ratios as current_vegetation
-FROM survey_data s
-JOIN segment_stats_by_zipcode y ON s.youth_zip = y.zipcode
-JOIN segment_stats_by_zipcode c ON s.now_zip = c.zipcode;
-``` 
+1. Open `validation_case.ipynb` to explore the disaster analysis workflow
+2. The notebook includes examples of:
+   - Wildfire perimeter data download and processing
+   - 600m grid system creation for analysis areas
+   - Maxar satellite imagery download pipeline
+   - Pre/post disaster image comparison setup 
+=======
+# cybertraining-team4
+Assessing Disaster Impact Through Streamlining Multimodal Geospatial Data with Building Damage Prediction and Demographic Attributes
+>>>>>>> 32d9df173e14e346efe0f20c248a0eb174eddae9
