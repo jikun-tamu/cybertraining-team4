@@ -1,0 +1,22 @@
+name: iguide-gpu
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10.18
+  - pip
+  - numpy=1.26.4
+  - pandas=2.3.2
+  - pillow=11.3.0
+  - opencv=4.12.0
+  - shapely=2.1.1
+  - geopandas=1.1.1
+  - pyproj=3.7.1
+  - pyogrio=0.11.0
+  - scikit-learn=1.7.1
+  - tqdm=4.67.1
+  - pytorch-cuda=12.1
+  - filelock=3.13.1
+  - fsspec=2024.6.1
