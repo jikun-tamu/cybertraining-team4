@@ -1,0 +1,27 @@
+name: cybertraining-team4
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - jupyter
+  - numpy
+  - pandas
+  - geopandas
+  - rasterio
+  - scikit-learn
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.8
+  - pip:
+    - panel
+    - hvplot
+    - tqdm
+    - wandb
+    - timm
+    - pyyaml
+    - hydra-core
+    - omegaconf
