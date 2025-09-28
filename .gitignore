@@ -8,6 +8,7 @@ __pycache__/
 
 # Large data files
 *.pth
+*.pt
 *.h5
 *.hdf5
 *.tar.gz
