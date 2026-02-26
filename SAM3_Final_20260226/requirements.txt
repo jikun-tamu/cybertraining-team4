@@ -1,0 +1,9 @@
+samgeo
+huggingface_hub
+torch
+rasterio
+shapely
+numpy
+Pillow
+geopandas
+geoai-py
