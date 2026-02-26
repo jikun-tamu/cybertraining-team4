@@ -62,3 +62,40 @@ def draw_polygons(
 def geojson_to_geoms(geojson: dict) -> list:
     feats = geojson.get("features", [])
     return [shape(f["geometry"]) for f in feats if f.get("geometry")]
+
+
+def parse_tile_meta(name: str):
+    import re
+
+    m = re.search(r"_x(\\d+)_y(\\d+)_w(\\d+)_h(\\d+)", name)
+    if not m:
+        return None
+    return tuple(int(x) for x in m.groups())
+
+
+def stitch_instance_masks(tile_paths: Iterable[Path], full_size: tuple[int, int]) -> np.ndarray:
+    w, h = full_size
+    canvas = np.zeros((h, w), dtype=np.uint32)
+    for tp in tile_paths:
+        meta = parse_tile_meta(tp.stem)
+        if meta is None:
+            continue
+        x, y, tw, th = meta
+        tile_mask = load_mask(tp)
+        canvas[y : y + th, x : x + tw] = np.maximum(canvas[y : y + th, x : x + tw], tile_mask[:th, :tw])
+    return canvas
+
+
+def stitch_annotation_tiles(tile_paths: Iterable[Path], full_size: tuple[int, int]) -> Image.Image:
+    w, h = full_size
+    canvas = Image.new("RGB", (w, h), (0, 0, 0))
+    for tp in tile_paths:
+        meta = parse_tile_meta(tp.stem)
+        if meta is None:
+            continue
+        x, y, tw, th = meta
+        tile_img = Image.open(tp)
+        if tile_img.size != (tw, th):
+            tile_img = tile_img.crop((0, 0, min(tw, tile_img.size[0]), min(th, tile_img.size[1])))
+        canvas.paste(tile_img, (x, y))
+    return canvas
