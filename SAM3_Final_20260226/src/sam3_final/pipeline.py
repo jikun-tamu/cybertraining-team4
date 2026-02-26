@@ -32,6 +32,8 @@ class PipelineConfig:
     save_annotations: bool = True
     run_polygons: bool = True
     clear_cache_every: int = 0
+    tile_annotations: bool = False
+    full_annotation: bool = True
     sam3_backend: str = "meta"
     sam3_device: str | None = None
     sam3_checkpoint: str | None = None
@@ -97,6 +99,7 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
 
     tile_counter = 0
     for img_path in images:
+        img_path = Path(img_path)
         georef = find_georef(img_path, metadata_path=cfg.metadata_path)
         if georef.crs is not None:
             crs_set.add(str(georef.crs))
@@ -118,6 +121,7 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
         image_t_poly = 0.0
         image_t_tile_io = sum(t.io_time_s for t in tiles)
         image_instances = 0
+        image_features: list[dict[str, Any]] = []
 
         for tile in tiles:
             tile_counter += 1
@@ -132,7 +136,7 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
                 min_size=cfg.min_size,
                 save_masks=cfg.save_masks,
                 save_scores=cfg.save_scores,
-                save_ann=cfg.save_annotations,
+                save_ann=cfg.save_annotations and cfg.tile_annotations,
             )
             if result is None:
                 continue
@@ -194,7 +198,9 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
                             "transform_source": "none",
                         }
                     )
-                all_features.append(_add_props(f["geometry"], props))
+                feat = _add_props(f["geometry"], props)
+                all_features.append(feat)
+                image_features.append(feat)
 
             summary["instances"] += len(features)
             image_instances += len(features)
@@ -222,6 +228,37 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
                 "t_tile_gen_s": t_tile_gen1 - t_tile_gen0,
             }
         )
+
+        if cfg.full_annotation:
+            try:
+                from PIL import Image
+                from .viz import stitch_instance_masks, colorize_instance_mask, draw_polygons
+
+                ann_dir = output_dir / "annotations"
+                ann_dir.mkdir(parents=True, exist_ok=True)
+
+                img = Image.open(img_path)
+                mask_tiles = list((output_dir / "masks").glob(f"{img_path.stem}_x*_y*_w*_h*.tif"))
+                mask_path = output_dir / "masks" / f"{img_path.stem}.tif"
+                if mask_path.exists():
+                    from .viz import load_mask
+                    mask = load_mask(mask_path)
+                elif mask_tiles:
+                    mask = stitch_instance_masks(mask_tiles, img.size)
+                else:
+                    mask = None
+
+                overlay = img.copy()
+                if mask is not None:
+                    mask_vis = colorize_instance_mask(mask)
+                    overlay = Image.blend(overlay.convert("RGB"), mask_vis, alpha=0.35)
+                if image_features:
+                    overlay = draw_polygons(overlay, [f["geometry"] for f in image_features], color="yellow", width=2)
+
+                ann_full = ann_dir / f"{img_path.stem}_ann_full.png"
+                overlay.save(ann_full)
+            except Exception:
+                pass
 
     # Write outputs
     out_geojson = output_dir / "buildings.geojson"

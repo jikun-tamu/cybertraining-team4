@@ -31,7 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--epsilon", type=float, default=2.0, help="Regularization epsilon")
     p.add_argument("--metadata", default=None, help="Optional metadata table (csv/json) for georef")
-    p.add_argument("--no-annotations", action="store_true", help="Disable annotation PNG output")
+    p.add_argument("--no-annotations", action="store_true", help="Disable all annotation PNG output")
+    p.add_argument("--tile-annotations", action="store_true", help="Save per-tile annotation PNGs")
+    p.add_argument("--full-annotation", action="store_true", help="Save full-size annotation PNG")
     p.add_argument("--no-masks", action="store_true", help="Disable mask output (still needed for run)")
     p.add_argument("--no-scores", action="store_true", help="Disable score TIFF output")
     p.add_argument("--no-polygons", action="store_true", help="Skip polygonize/regularize/export")
@@ -63,6 +65,8 @@ def main() -> None:
         save_masks=not args.no_masks,
         save_scores=not args.no_scores,
         save_annotations=not args.no_annotations,
+        tile_annotations=args.tile_annotations,
+        full_annotation=(args.full_annotation and not args.no_annotations),
         run_polygons=not args.no_polygons,
         clear_cache_every=args.clear_cache_every,
         sam3_backend=args.backend,
