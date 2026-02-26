@@ -248,7 +248,12 @@ def _run_notebook_style(cfg: PipelineConfig) -> dict[str, Any]:
             batch = images[start : start + max(1, cfg.batch_size)]
             batch_paths = [str(p) for p in batch]
             sam3.set_image_batch(batch_paths)
-            sam3.generate_masks_batch(cfg.prompt, min_size=cfg.min_size)
+            batch_results = None
+            try:
+                sam3.generate_masks_batch(cfg.prompt, min_size=cfg.min_size)
+                batch_results = sam3.batch_results
+            except RuntimeError:
+                batch_results = None
 
             for i, img_path in enumerate(batch):
                 img_path = Path(img_path)
@@ -256,7 +261,13 @@ def _run_notebook_style(cfg: PipelineConfig) -> dict[str, Any]:
                 import time
                 t0 = time.perf_counter()
 
-                result = sam3.batch_results[i]
+                if batch_results is not None:
+                    result = batch_results[i]
+                else:
+                    # Fallback to per-image inference if batch fails (e.g., empty mask tensor bug)
+                    sam3.set_image(str(img_path))
+                    sam3.generate_masks(prompt=cfg.prompt, min_size=cfg.min_size)
+                    result = {\"masks\": getattr(sam3, \"masks\", []), \"scores\": getattr(sam3, \"scores\", None)}
                 from PIL import Image
                 w, h = Image.open(img_path).size
                 label_mask, score_mask = _result_to_label_score(result, (h, w))
