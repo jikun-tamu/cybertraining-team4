@@ -34,6 +34,10 @@ class PipelineConfig:
     clear_cache_every: int = 0
     tile_annotations: bool = False
     full_annotation: bool = True
+    output_style: str = "notebook"
+    batch_size: int = 1
+    max_images: int | None = None
+    pattern: str | None = None
     sam3_backend: str = "meta"
     sam3_device: str | None = None
     sam3_checkpoint: str | None = None
