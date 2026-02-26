@@ -243,49 +243,71 @@ def _run_notebook_style(cfg: PipelineConfig) -> dict[str, Any]:
 
     tile_counter = 0
 
+    if cfg.tile_size is None:
+        for start in range(0, len(images), max(1, cfg.batch_size)):
+            batch = images[start : start + max(1, cfg.batch_size)]
+            batch_paths = [str(p) for p in batch]
+            sam3.set_image_batch(batch_paths)
+            sam3.generate_masks_batch(cfg.prompt, min_size=cfg.min_size)
+
+            for i, img_path in enumerate(batch):
+                img_path = Path(img_path)
+                georef = find_georef(img_path, metadata_path=cfg.metadata_path)
+                import time
+                t0 = time.perf_counter()
+
+                result = sam3.batch_results[i]
+                from PIL import Image
+                w, h = Image.open(img_path).size
+                label_mask, score_mask = _result_to_label_score(result, (h, w))
+
+                if cfg.save_masks:
+                    _write_mask_tif(masks_dir / f"{img_path.stem}.tif", label_mask)
+                    if cfg.save_scores:
+                        _write_mask_tif(masks_dir / f"{img_path.stem}_scores.tif", score_mask)
+
+                features = []
+                if cfg.run_polygons:
+                    try:
+                        if cfg.save_scores:
+                            vectorize_mask_to_wkt_json(
+                                masks_dir / f"{img_path.stem}.tif",
+                                masks_dir / f"{img_path.stem}_scores.tif",
+                                labels_dir,
+                                epsilon=cfg.epsilon,
+                            )
+                    except Exception:
+                        pass
+
+                if cfg.save_annotations and cfg.full_annotation:
+                    _save_full_annotation(img_path, label_mask, features, ann_dir / f"{img_path.stem}_ann.png")
+
+                summary["instances"] += int(label_mask.max())
+                t1 = time.perf_counter()
+                timing_images.append(
+                    {
+                        "image_id": img_path.stem,
+                        "num_tiles": 1,
+                        "num_instances": int(label_mask.max()),
+                        "t_total_s": t1 - t0,
+                    }
+                )
+        # no tiling; done
+        # Write timing outputs
+        import pandas as pd
+        timing_csv = output_dir / "timing_per_image.csv"
+        pd.DataFrame(timing_images).to_csv(timing_csv, index=False)
+        timing_json = output_dir / "run_timing_summary.json"
+        timing_json.write_text(json.dumps({\"summary\": summary, \"timing_per_image\": timing_images, \"timing_per_tile\": timing_tiles}, indent=2))
+        summary[\"outputs\"] = {\"masks\": str(masks_dir), \"annotations\": str(ann_dir), \"labels\": str(labels_dir)}
+        return summary
+
     for img_path in images:
         img_path = Path(img_path)
         georef = find_georef(img_path, metadata_path=cfg.metadata_path)
 
         import time
         t0 = time.perf_counter()
-
-        # If no tiling, use batch API when possible
-        if cfg.tile_size is None:
-            batch_paths = [str(img_path)]
-            sam3.set_image_batch(batch_paths)
-            sam3.generate_masks_batch(cfg.prompt, min_size=cfg.min_size)
-            result = sam3.batch_results[0]
-
-            from PIL import Image
-            w, h = Image.open(img_path).size
-            label_mask, score_mask = _result_to_label_score(result, (h, w))
-
-            if cfg.save_masks:
-                _write_mask_tif(masks_dir / f"{img_path.stem}.tif", label_mask)
-                if cfg.save_scores:
-                    _write_mask_tif(masks_dir / f"{img_path.stem}_scores.tif", score_mask)
-
-            features = []
-            if cfg.run_polygons:
-                try:
-                    if cfg.save_scores:
-                        vectorize_mask_to_wkt_json(
-                            masks_dir / f"{img_path.stem}.tif",
-                            masks_dir / f"{img_path.stem}_scores.tif",
-                            labels_dir,
-                            epsilon=cfg.epsilon,
-                        )
-                except Exception:
-                    pass
-
-            if cfg.save_annotations and cfg.full_annotation:
-                _save_full_annotation(img_path, label_mask, features, ann_dir / f"{img_path.stem}_ann.png")
-
-            summary["instances"] += int(label_mask.max())
-            t1 = time.perf_counter()
-            timing_images.append({"image_id": img_path.stem, "num_tiles": 1, "num_instances": int(label_mask.max()), "t_total_s": t1 - t0})
-            continue
 
         # Tiled processing
         tiles = generate_tiles(
