@@ -267,7 +267,7 @@ def _run_notebook_style(cfg: PipelineConfig) -> dict[str, Any]:
                     # Fallback to per-image inference if batch fails (e.g., empty mask tensor bug)
                     sam3.set_image(str(img_path))
                     sam3.generate_masks(prompt=cfg.prompt, min_size=cfg.min_size)
-                    result = {\"masks\": getattr(sam3, \"masks\", []), \"scores\": getattr(sam3, \"scores\", None)}
+                    result = {"masks": getattr(sam3, "masks", []), "scores": getattr(sam3, "scores", None)}
                 from PIL import Image
                 w, h = Image.open(img_path).size
                 label_mask, score_mask = _result_to_label_score(result, (h, w))
