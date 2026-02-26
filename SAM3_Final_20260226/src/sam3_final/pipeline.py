@@ -298,8 +298,8 @@ def _run_notebook_style(cfg: PipelineConfig) -> dict[str, Any]:
         timing_csv = output_dir / "timing_per_image.csv"
         pd.DataFrame(timing_images).to_csv(timing_csv, index=False)
         timing_json = output_dir / "run_timing_summary.json"
-        timing_json.write_text(json.dumps({\"summary\": summary, \"timing_per_image\": timing_images, \"timing_per_tile\": timing_tiles}, indent=2))
-        summary[\"outputs\"] = {\"masks\": str(masks_dir), \"annotations\": str(ann_dir), \"labels\": str(labels_dir)}
+        timing_json.write_text(json.dumps({"summary": summary, "timing_per_image": timing_images, "timing_per_tile": timing_tiles}, indent=2))
+        summary["outputs"] = {"masks": str(masks_dir), "annotations": str(ann_dir), "labels": str(labels_dir)}
         return summary
 
     for img_path in images:
