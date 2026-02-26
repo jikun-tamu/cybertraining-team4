@@ -9,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 
 from .export import write_geojson, write_geopackage
 from .georef import find_georef
-from .infer import Sam3Config, init_sam3, infer_single_image
+from .infer import Sam3Config, init_sam3, infer_single_image, clear_gpu_cache
 from .polygonize import PolygonizeConfig, polygonize_mask
 from .tiling import generate_tiles
 from .utils import ensure_dir, list_images
@@ -28,7 +28,10 @@ class PipelineConfig:
     use_geoai: bool = False
     metadata_path: str | None = None
     save_masks: bool = True
+    save_scores: bool = True
     save_annotations: bool = True
+    run_polygons: bool = True
+    clear_cache_every: int = 0
     sam3_backend: str = "meta"
     sam3_device: str | None = None
     sam3_checkpoint: str | None = None
@@ -53,6 +56,18 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
     ensure_dir(output_dir)
     images = list_images(cfg.input_path, cfg.exts)
 
+    import torch
+    import json
+    print(f"torch_version: {torch.__version__}")
+    print(f"cuda_available: {torch.cuda.is_available()}")
+    print(f"cuda_device_count: {torch.cuda.device_count()}")
+    if cfg.sam3_device and "cuda" in cfg.sam3_device and torch.cuda.is_available():
+        try:
+            idx = int(cfg.sam3_device.split(":")[1])
+            print(f"selected_device: cuda:{idx} ({torch.cuda.get_device_name(idx)})")
+        except Exception:
+            print(f"selected_device: {cfg.sam3_device}")
+
     sam3 = init_sam3(
         Sam3Config(
             backend=cfg.sam3_backend,
@@ -71,6 +86,8 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
 
     all_features: list[dict[str, Any]] = []
     crs_set = set()
+    timing_tiles: list[dict[str, Any]] = []
+    timing_images: list[dict[str, Any]] = []
     summary = {
         "images": len(images),
         "tiles": 0,
@@ -78,11 +95,14 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
         "skipped_images": 0,
     }
 
+    tile_counter = 0
     for img_path in images:
         georef = find_georef(img_path, metadata_path=cfg.metadata_path)
         if georef.crs is not None:
             crs_set.add(str(georef.crs))
 
+        import time
+        t_tile_gen0 = time.perf_counter()
         tiles = generate_tiles(
             img_path,
             out_dir=output_dir,
@@ -90,36 +110,67 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
             overlap=cfg.overlap,
             transform=georef.transform,
         )
+        t_tile_gen1 = time.perf_counter()
         summary["tiles"] += len(tiles)
 
+        image_t_infer = 0.0
+        image_t_save = 0.0
+        image_t_poly = 0.0
+        image_t_tile_io = sum(t.io_time_s for t in tiles)
+        image_instances = 0
+
         for tile in tiles:
+            tile_counter += 1
+            if cfg.clear_cache_every and tile_counter % cfg.clear_cache_every == 0:
+                clear_gpu_cache()
+
             result = infer_single_image(
                 sam3,
                 tile.tile_path,
                 output_dir=output_dir,
                 prompt=cfg.prompt,
                 min_size=cfg.min_size,
-                save_scores=True,
+                save_masks=cfg.save_masks,
+                save_scores=cfg.save_scores,
                 save_ann=cfg.save_annotations,
             )
             if result is None:
                 continue
 
-            if not cfg.save_masks:
-                # Still polygonize; masks are required, so we keep them for this run
-                pass
+            image_t_infer += result.t_infer_s
+            image_t_save += result.t_save_s
+
+            if cfg.run_polygons:
+                if result.mask_path is None:
+                    raise RuntimeError("Polygonization requested but masks were not saved.")
+            else:
+                timing_tiles.append(
+                    {
+                        "image_id": tile.image_id,
+                        "tile_id": tile.tile_id,
+                        "t_tile_io_s": tile.io_time_s,
+                        "t_infer_s": result.t_infer_s,
+                        "t_save_s": result.t_save_s,
+                        "t_poly_s": 0.0,
+                    }
+                )
+                continue
 
             # Use georef transform if available; otherwise translate to full-image pixel coords
             tile_transform = tile.transform
             if tile_transform is None:
                 tile_transform = Affine.translation(tile.x, tile.y)
 
+            t_poly0 = time.perf_counter()
             features = polygonize_mask(
                 result.mask_path,
                 result.score_path,
                 transform=tile_transform,
                 cfg=poly_cfg,
             )
+            t_poly1 = time.perf_counter()
+            t_poly = t_poly1 - t_poly0
+            image_t_poly += t_poly
 
             for f in features:
                 props = f["properties"]
@@ -146,19 +197,61 @@ def run_pipeline(cfg: PipelineConfig) -> dict[str, Any]:
                 all_features.append(_add_props(f["geometry"], props))
 
             summary["instances"] += len(features)
+            image_instances += len(features)
+
+            timing_tiles.append(
+                {
+                    "image_id": tile.image_id,
+                    "tile_id": tile.tile_id,
+                    "t_tile_io_s": tile.io_time_s,
+                    "t_infer_s": result.t_infer_s,
+                    "t_save_s": result.t_save_s,
+                    "t_poly_s": t_poly,
+                }
+            )
+
+        timing_images.append(
+            {
+                "image_id": Path(img_path).stem,
+                "num_tiles": len(tiles),
+                "num_instances": image_instances,
+                "t_tile_io_s": image_t_tile_io,
+                "t_infer_s": image_t_infer,
+                "t_save_s": image_t_save,
+                "t_poly_s": image_t_poly,
+                "t_tile_gen_s": t_tile_gen1 - t_tile_gen0,
+            }
+        )
 
     # Write outputs
     out_geojson = output_dir / "buildings.geojson"
+    out_gpkg = output_dir / "buildings.gpkg"
+    gpkg_ok = False
     out_crs = None
     if len(crs_set) == 1:
         out_crs = list(crs_set)[0]
-    write_geojson(all_features, out_geojson, crs=out_crs)
-
-    out_gpkg = output_dir / "buildings.gpkg"
-    gpkg_ok = write_geopackage(all_features, out_gpkg, crs=out_crs)
+    if cfg.run_polygons:
+        write_geojson(all_features, out_geojson, crs=out_crs)
+        gpkg_ok = write_geopackage(all_features, out_gpkg, crs=out_crs)
 
     summary["outputs"] = {
-        "geojson": str(out_geojson),
+        "geojson": str(out_geojson) if cfg.run_polygons else None,
         "gpkg": str(out_gpkg) if gpkg_ok else None,
     }
+
+    import pandas as pd
+    timing_csv = output_dir / "timing_per_image.csv"
+    pd.DataFrame(timing_images).to_csv(timing_csv, index=False)
+
+    timing_json = output_dir / "run_timing_summary.json"
+    timing_json.write_text(
+        json.dumps(
+            {
+                "summary": summary,
+                "timing_per_image": timing_images,
+                "timing_per_tile": timing_tiles,
+            },
+            indent=2,
+        )
+    )
     return summary

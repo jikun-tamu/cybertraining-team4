@@ -20,6 +20,7 @@ class TileInfo:
     width: int
     height: int
     transform: Affine | None
+    io_time_s: float
 
 
 def generate_tiles(
@@ -33,11 +34,15 @@ def generate_tiles(
     image_id = image_path.stem
     tiles_dir = ensure_dir(Path(out_dir) / "tiles" / image_id)
 
+    import time
+
     with Image.open(image_path) as im:
         width, height = im.size
         if not tile_size:
             tile_path = tiles_dir / f"{image_id}.png"
+            t0 = time.perf_counter()
             im.save(tile_path)
+            t1 = time.perf_counter()
             return [
                 TileInfo(
                     image_id=image_id,
@@ -48,6 +53,7 @@ def generate_tiles(
                     width=width,
                     height=height,
                     transform=transform,
+                    io_time_s=t1 - t0,
                 )
             ]
 
@@ -59,10 +65,12 @@ def generate_tiles(
                 y2 = min(y + tile_size, height)
                 if x2 - x <= 0 or y2 - y <= 0:
                     continue
+                t0 = time.perf_counter()
                 tile = im.crop((x, y, x2, y2))
                 tile_id = f"{image_id}_x{x}_y{y}_w{x2-x}_h{y2-y}"
                 tile_path = tiles_dir / f"{tile_id}.png"
                 tile.save(tile_path)
+                t1 = time.perf_counter()
 
                 tile_transform = None
                 if transform is not None:
@@ -78,6 +86,7 @@ def generate_tiles(
                         width=x2 - x,
                         height=y2 - y,
                         transform=tile_transform,
+                        io_time_s=t1 - t0,
                     )
                 )
         return tiles

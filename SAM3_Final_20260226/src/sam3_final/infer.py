@@ -23,10 +23,12 @@ class Sam3Config:
 
 @dataclass
 class InferenceResult:
-    mask_path: Path
+    mask_path: Path | None
     score_path: Path | None
     ann_path: Path | None
     num_instances: int
+    t_infer_s: float
+    t_save_s: float
 
 
 def init_sam3(cfg: Sam3Config) -> SamGeo3:
@@ -54,6 +56,7 @@ def infer_single_image(
     output_dir: str | Path,
     prompt: str = "building",
     min_size: int = 100,
+    save_masks: bool = True,
     save_scores: bool = True,
     save_ann: bool = True,
     dpi: int = 150,
@@ -64,29 +67,38 @@ def infer_single_image(
     mask_dir = ensure_dir(output_dir / "masks")
     ann_dir = ensure_dir(output_dir / "annotations")
 
-    clear_gpu_cache()
+    import time
+
     sam3.set_image(str(image_path))
+    t0 = time.perf_counter()
     sam3.generate_masks(prompt=prompt, min_size=min_size)
+    t1 = time.perf_counter()
 
     if not hasattr(sam3, "masks") or len(sam3.masks) == 0:
         return None
 
-    mask_path = mask_dir / f"{image_path.stem}.tif"
-    score_path = mask_dir / f"{image_path.stem}_scores.tif" if save_scores else None
-
-    if save_scores:
-        sam3.save_masks(output=str(mask_path), save_scores=str(score_path), unique=True)
-    else:
-        sam3.save_masks(output=str(mask_path), unique=True)
+    mask_path = None
+    score_path = None
+    t2 = time.perf_counter()
+    if save_masks:
+        mask_path = mask_dir / f"{image_path.stem}.tif"
+        score_path = mask_dir / f"{image_path.stem}_scores.tif" if save_scores else None
+        if save_scores:
+            sam3.save_masks(output=str(mask_path), save_scores=str(score_path), unique=True)
+        else:
+            sam3.save_masks(output=str(mask_path), unique=True)
 
     ann_path = None
     if save_ann:
         ann_path = ann_dir / f"{image_path.stem}_ann.png"
         sam3.show_anns(output=str(ann_path), dpi=dpi, font_size=font_size)
+    t3 = time.perf_counter()
 
     return InferenceResult(
         mask_path=mask_path,
         score_path=score_path,
         ann_path=ann_path,
         num_instances=len(sam3.masks),
+        t_infer_s=t1 - t0,
+        t_save_s=t3 - t2,
     )

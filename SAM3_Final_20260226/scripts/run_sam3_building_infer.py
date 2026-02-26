@@ -1,3 +1,5 @@
+# Sample command: python run_sam3_building_infer.py --input /media/data/building_instance_tamu/test/images --output /media/data/building_instance_tamu/sam3/test_260225 --prompt "building" --min-size 100 --tile-size 512 --overlap 64 --regularize geoai --epsilon 2.0 --metadata /path/to/metadata.csv --backend meta --device cuda:0 --checkpoint /path/to/checkpoint.pth
+
 #!/usr/bin/env python
 from __future__ import annotations
 
@@ -31,6 +33,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--metadata", default=None, help="Optional metadata table (csv/json) for georef")
     p.add_argument("--no-annotations", action="store_true", help="Disable annotation PNG output")
     p.add_argument("--no-masks", action="store_true", help="Disable mask output (still needed for run)")
+    p.add_argument("--no-scores", action="store_true", help="Disable score TIFF output")
+    p.add_argument("--no-polygons", action="store_true", help="Skip polygonize/regularize/export")
+    p.add_argument("--clear-cache-every", type=int, default=0, help="Clear CUDA cache every N tiles (0=disabled)")
     p.add_argument("--backend", default="meta", help="SAM3 backend (meta|transformers)")
     p.add_argument("--device", default=None, help="Device override (e.g., cuda:0)")
     p.add_argument("--checkpoint", default=None, help="Local checkpoint path")
@@ -56,7 +61,10 @@ def main() -> None:
         use_geoai=(args.regularize == "geoai"),
         metadata_path=args.metadata,
         save_masks=not args.no_masks,
+        save_scores=not args.no_scores,
         save_annotations=not args.no_annotations,
+        run_polygons=not args.no_polygons,
+        clear_cache_every=args.clear_cache_every,
         sam3_backend=args.backend,
         sam3_device=args.device,
         sam3_checkpoint=args.checkpoint,
