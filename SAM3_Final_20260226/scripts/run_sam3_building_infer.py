@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from sam3_final.pipeline import PipelineConfig, run_pipeline
+from sam3_final.utils import get_env_var
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="SAM3 pre-disaster building footprint extraction")
+    p.add_argument("--input", required=True, help="Input image or directory")
+    p.add_argument("--output", required=True, help="Output directory")
+    p.add_argument("--prompt", default="building", help="SAM3 text prompt")
+    p.add_argument("--min-size", type=int, default=100, help="Minimum mask size")
+    p.add_argument("--tile-size", type=int, default=None, help="Tile size in pixels")
+    p.add_argument("--overlap", type=int, default=0, help="Tile overlap in pixels")
+    p.add_argument(
+        "--regularize",
+        default="none",
+        choices=["none", "simplify", "min_rot_rect", "geoai"],
+        help="Regularization method",
+    )
+    p.add_argument("--epsilon", type=float, default=2.0, help="Regularization epsilon")
+    p.add_argument("--metadata", default=None, help="Optional metadata table (csv/json) for georef")
+    p.add_argument("--no-annotations", action="store_true", help="Disable annotation PNG output")
+    p.add_argument("--no-masks", action="store_true", help="Disable mask output (still needed for run)")
+    p.add_argument("--backend", default="meta", help="SAM3 backend (meta|transformers)")
+    p.add_argument("--device", default=None, help="Device override (e.g., cuda:0)")
+    p.add_argument("--checkpoint", default=None, help="Local checkpoint path")
+    p.add_argument("--no-hf", action="store_true", help="Do not load weights from Hugging Face")
+    p.add_argument("--exts", default="png,jpg,jpeg,tif,tiff", help="Comma-separated extensions")
+    return p
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+
+    hf_token = get_env_var("HF_TOKEN")
+
+    cfg = PipelineConfig(
+        input_path=args.input,
+        output_dir=args.output,
+        prompt=args.prompt,
+        min_size=args.min_size,
+        tile_size=args.tile_size,
+        overlap=args.overlap,
+        regularize_method=("geoai" if args.regularize == "geoai" else args.regularize),
+        epsilon=args.epsilon,
+        use_geoai=(args.regularize == "geoai"),
+        metadata_path=args.metadata,
+        save_masks=not args.no_masks,
+        save_annotations=not args.no_annotations,
+        sam3_backend=args.backend,
+        sam3_device=args.device,
+        sam3_checkpoint=args.checkpoint,
+        sam3_load_from_hf=not args.no_hf,
+        hf_token=hf_token,
+        exts=tuple([e.strip() for e in args.exts.split(",") if e.strip()]),
+    )
+
+    summary = run_pipeline(cfg)
+    out_path = Path(args.output) / "run_summary.json"
+    out_path.write_text(json.dumps(summary, indent=2))
+    print(json.dumps(summary, indent=2))
+
+
+if __name__ == "__main__":
+    main()
