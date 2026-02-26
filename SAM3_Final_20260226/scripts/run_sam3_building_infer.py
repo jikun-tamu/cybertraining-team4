@@ -37,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--output-style", default="notebook", choices=["notebook", "tiled"], help="Output style")
     p.add_argument("--batch-size", type=int, default=1, help="Batch size for inference")
     p.add_argument("--max-images", type=int, default=None, help="Max number of images to process")
-    p.add_argument("--pattern", default=None, help="Filename glob pattern (e.g., '*_pre_disaster.png')")
+    p.add_argument("--pattern", default="*_pre_disaster.png", help="Filename glob pattern")
     p.add_argument("--no-masks", action="store_true", help="Disable mask output (still needed for run)")
     p.add_argument("--no-scores", action="store_true", help="Disable score TIFF output")
     p.add_argument("--no-polygons", action="store_true", help="Skip polygonize/regularize/export")
