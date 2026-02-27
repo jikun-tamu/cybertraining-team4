@@ -22,8 +22,21 @@ __pycache__/
 # Model weights and checkpoints
 corrected_building_segmentation_model.pth
 *.model
+*.bin
+*.ckpt
+*.safetensors
+*.onnx
+*.pb
+*.pkl
+*.joblib
 checkpoints/
 models/
+trained_weights/          # e.g. PolyWorld/trained_weights/ (re-download from GDrive)
+*/trained_weights/
+runs/
+lightning_logs/
+wandb/
+mlruns/
 
 # Data directories with large files
 data/
@@ -32,6 +45,27 @@ data/processed/large_files/
 predicted_jsons/
 evaluation_results/
 corrected_evaluation_results/
+
+# Geospatial rasters and large vectors (generated outputs)
+*.las
+*.laz
+*.vrt
+*.geotiff
+outputs/**/*.geojson
+outputs/**/*.gpkg
+outputs/**/*.shp
+outputs/**/*.dbf
+outputs/**/*.shx
+outputs/**/*.prj
+*/outputs/
+*/results/
+
+# Training tiles / chips (auto-generated, can be regenerated)
+*/tiles/
+*/chips/
+*/patches/
+buildings_instance/images/
+buildings_instance/labels/
 
 # Temporary and cache files
 temp/
