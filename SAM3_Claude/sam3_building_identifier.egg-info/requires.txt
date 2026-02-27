@@ -1,0 +1,9 @@
+samgeo>=1.0.1
+torch
+geoai
+rasterio
+shapely>=2.0
+numpy
+Pillow
+opencv-python
+tqdm

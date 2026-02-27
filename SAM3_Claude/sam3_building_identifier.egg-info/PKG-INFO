@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: sam3_building_identifier
+Version: 0.1.0
+Requires-Python: >=3.10
+Requires-Dist: samgeo>=1.0.1
+Requires-Dist: torch
+Requires-Dist: geoai
+Requires-Dist: rasterio
+Requires-Dist: shapely>=2.0
+Requires-Dist: numpy
+Requires-Dist: Pillow
+Requires-Dist: opencv-python
+Requires-Dist: tqdm
+Dynamic: requires-dist
+Dynamic: requires-python
