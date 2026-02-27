@@ -8,7 +8,7 @@ input_dir = "/media/gisense/xihan/250812_tamu_cybertraining_team4/data/interim/c
 output_dir = "/media/gisense/xihan/250812_tamu_cybertraining_team4/data/interim/Building_Segmentation/GeoAI_QuishengWu_ESRI"
 
 # Specify the path to the locally downloaded model
-model_path = "building_footprints_usa.pth"
+model_path = "../models/building_footprints_usa.pth"
 extractor = geoai.BuildingFootprintExtractor(model_path=model_path)
 
 # --- Change the chip size here ---
@@ -23,7 +23,7 @@ tif_files = glob.glob(search_pattern, recursive=True)
 # Initialize the building footprint extractor if not already done
 # Assuming 'extractor' is already created and model is loaded from previous cells.
 # If not, you would initialize it here:
-# model_path = "building_footprints_usa.pth"
+# model_path = "../models/building_footprints_usa.pth"
 # extractor = geoai.BuildingFootprintExtractor(model_path=model_path)
 
 # Process each tif file
