@@ -1,2 +1,0 @@
-[console_scripts]
-sam3-identify = sam3_building_identifier.__main__:main

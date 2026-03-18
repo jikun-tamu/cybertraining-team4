@@ -100,10 +100,17 @@ training_curves.png
 # Test directories that might contain large files
 test/
 
-# II_package: large outputs and model weights (keep code/configs only)
+# pipeline (formerly II_package): large outputs and model weights
 II_package.zip
-II_package/outputs/
-II_package/models/
-II_package/calibration/
-II_package/stage1/**/.tmp_tiles/
-II_package/stage1/**/pair_inputs/
+pipeline/outputs/
+pipeline/models/
+# Note: pipeline/calibration/ kept — small .npy scalars needed for inference
+
+# Exploration: data outputs (not code)
+exploration/GeoAI_building_segmentation/
+exploration/*/outputs/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
