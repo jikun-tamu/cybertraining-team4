@@ -99,3 +99,11 @@ training_curves.png
 
 # Test directories that might contain large files
 test/
+
+# II_package: large outputs and model weights (keep code/configs only)
+II_package.zip
+II_package/outputs/
+II_package/models/
+II_package/calibration/
+II_package/stage1/**/.tmp_tiles/
+II_package/stage1/**/pair_inputs/

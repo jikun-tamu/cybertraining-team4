@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Disaster impact assessment pipeline using satellite imagery, building damage prediction, and demographic data. The primary active deliverable is **`SAM3_Claude/`** — a batch building-detection package using SAM3 (Segment Anything Model 3) via samgeo.
+Disaster impact assessment pipeline using satellite imagery, building damage prediction, and demographic data.
+
+**Active deliverables:**
+- **`stage1/`** — batch building-detection package using SAM3 (Segment Anything Model 3) via samgeo (formerly `SAM3_Claude/`)
+- **`pipeline/`** — combined Stage 1 + Stage 2 pipeline (formerly `II_package/`), collaborator-integrated
+- **`evaluation/`** — xView2 benchmark scripts and results
+
+**Exploration only** (not production): `exploration/` contains Mask R-CNN, PolyWorld, GeoAI_QuishengWu, and earlier SAM3 variants
 
 ## Environments
 
@@ -15,10 +22,10 @@ conda activate geoai_sam          # interactive
 conda run -n geoai_sam <command>  # non-interactive / scripted
 ```
 
-## SAM3_Claude — Primary Package
+## stage1 — SAM3 Building Detection Package
 
-**Location**: `SAM3_Claude/`
-**Install** (editable, no deps): `pip install -e SAM3_Claude --no-deps`
+**Location**: `stage1/`  (formerly `SAM3_Claude/`)
+**Install** (editable, no deps): `pip install -e stage1 --no-deps`
 **One-time HF login** (caches token): `python -c "from huggingface_hub import login; login()"`
 
 ### Running the pipeline
@@ -43,7 +50,7 @@ python -m sam3_building_identifier --no-skip ...
 ### Smoke test (3 images, ~30s on GPU)
 
 ```bash
-conda run -n geoai_sam python SAM3_Claude/tests/smoke_test.py
+conda run -n geoai_sam python stage1/tests/smoke_test.py
 ```
 
 ### Key default parameters
@@ -102,13 +109,19 @@ Other outputs per image (when detections > 0):
 
 | Directory | Purpose |
 |-----------|---------|
-| `SAM3_Final_20260226/` | Alternative SAM3 pipeline with georeferencing recovery and GeoJSON/GPKG output |
-| `SAM3/` | Source Jupyter notebooks |
-| `PolyWorld/` | PolygonGNN (CVPR 2022) building extraction — `prediction.py`, `coco_to_shp.py`, `coco_IoU_cIoU.py` |
-| `Mask_R-CNN_train/` | Mask R-CNN training code |
+| `pipeline/` | Combined Stage 1+2 pipeline (collaborator-integrated); LA fire validation outputs in `pipeline/outputs/` |
+| `evaluation/` | xView2 benchmark script (`evaluate_predictions.py`) + results in `evaluation/results/sam3_eval/` |
+| `results/` | LA fire run outputs (masks, overlays, logs) |
 | `src/cybertraining_team4/` | Core project package (training, evaluation stages) |
 | `notebooks/` | EDA and validation notebooks |
-| `data/` | raw/ (immutable) → interim/ → processed/ |
+| `data/` | LA fire data: raw/ (immutable) → interim/ → processed/ |
+| `exploration/` | Experimental/comparison work (not production) |
+| `exploration/SAM3_notebooks/` | Original SAM3 Jupyter notebooks |
+| `exploration/SAM3_Final/` | Alternative SAM3 pipeline with georeferencing recovery and GeoJSON/GPKG output |
+| `exploration/PolyWorld/` | PolygonGNN (CVPR 2022) building extraction |
+| `exploration/Mask_R-CNN/` | Mask R-CNN training code |
+| `exploration/GeoAI_QuishengWu/` | GeoAI experiments |
+| `exploration/corrected_model/` | Early Mask R-CNN checkpoint (corrected_building_segmentation_model.pth) + eval results |
 
 ## GPU Notes
 
