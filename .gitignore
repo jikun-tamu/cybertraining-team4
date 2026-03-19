@@ -100,6 +100,12 @@ training_curves.png
 # Test directories that might contain large files
 test/
 
+# Keep evaluation results (small metric files, figures — not data outputs)
+!evaluation/results/
+!evaluation/results/**/*.png
+!evaluation/results/**/*.json
+!evaluation/results/**/*.md
+
 # pipeline (formerly II_package): large outputs and model weights
 II_package.zip
 pipeline/outputs/
