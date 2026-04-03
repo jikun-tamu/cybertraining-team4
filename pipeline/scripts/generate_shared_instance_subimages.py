@@ -58,12 +58,102 @@ def parse_wkt_polygon_xy(wkt):
     if not wkt or not isinstance(wkt, str):
         return None
     wkt = wkt.strip()
-    if not wkt.upper().startswith("POLYGON"):
-        return None
-    nums = [float(x) for x in WKT_FLOAT_RE.findall(wkt)]
-    if len(nums) < 6 or len(nums) % 2 != 0:
-        return None
-    return np.array(nums, dtype=np.float32).reshape(-1, 2)
+    upper = wkt.upper()
+    if upper.startswith("POLYGON"):
+        rings = _extract_wkt_rings(wkt, "POLYGON")
+        return _largest_valid_ring(rings)
+    if upper.startswith("MULTIPOLYGON"):
+        rings = _extract_wkt_rings(wkt, "MULTIPOLYGON")
+        return _largest_valid_ring(rings)
+    return None
+
+
+def _extract_wkt_rings(wkt, geom_type):
+    text = wkt.strip()
+    body = text[len(geom_type) :].strip()
+    if not (body.startswith("(") and body.endswith(")")):
+        return []
+
+    groups = []
+    start = None
+    depth = 0
+    for idx, ch in enumerate(body):
+        if ch == "(":
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0 and start is not None:
+                groups.append(body[start : idx + 1])
+                start = None
+
+    if geom_type == "POLYGON":
+        if not groups:
+            return []
+        return [_parse_ring_text(groups[0][1:-1])]
+
+    rings = []
+    for poly_group in groups:
+        inner = poly_group[1:-1].strip()
+        sub_groups = []
+        start = None
+        depth = 0
+        for idx, ch in enumerate(inner):
+            if ch == "(":
+                if depth == 0:
+                    start = idx
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0 and start is not None:
+                    sub_groups.append(inner[start : idx + 1])
+                    start = None
+        if sub_groups:
+            rings.append(_parse_ring_text(sub_groups[0][1:-1]))
+    return rings
+
+
+def _parse_ring_text(text):
+    pts = []
+    for chunk in text.split(","):
+        nums = [float(x) for x in WKT_FLOAT_RE.findall(chunk)]
+        if len(nums) >= 2:
+            pts.append((nums[0], nums[1]))
+    if len(pts) >= 2 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    return np.array(pts, dtype=np.float32) if pts else None
+
+
+def _polygon_area_abs(pts):
+    if pts is None or len(pts) < 3:
+        return 0.0
+    x = pts[:, 0]
+    y = pts[:, 1]
+    return 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+
+
+def _largest_valid_ring(rings):
+    best = None
+    best_area = -1.0
+    for ring in rings:
+        if ring is None or len(ring) < 3:
+            continue
+        area = _polygon_area_abs(ring)
+        if area > best_area:
+            best = ring
+            best_area = area
+    return best
+
+
+def polygon_xy_to_wkt(pts):
+    if pts is None or len(pts) < 3:
+        return ""
+    coords = [tuple(map(float, p)) for p in pts]
+    if coords[0] != coords[-1]:
+        coords.append(coords[0])
+    pts_text = ", ".join(f"{x} {y}" for x, y in coords)
+    return f"POLYGON (({pts_text}))"
 
 
 def polygon_centroid(pts):
@@ -185,6 +275,104 @@ def derive_post_name(pre_name, pre_token, post_token):
     return pre_name
 
 
+def _is_stage1_package_format(doc):
+    """Detect stage1/sam3_building_identifier output format (has 'instances' key)."""
+    return "instances" in doc and isinstance(doc["instances"], list)
+
+
+def _polygon_coords_to_wkt(coords):
+    """Convert [[x,y], ...] polygon to WKT string."""
+    if not coords or len(coords) < 3:
+        return ""
+    pts = " ".join(f"{x} {y}" for x, y in coords)
+    # Close ring if not already closed
+    if coords[0] != coords[-1]:
+        pts += f" {coords[0][0]} {coords[0][1]}"
+    return f"POLYGON (({pts}))"
+
+
+def _rows_from_stage1_package_json(args, label_files):
+    """Parse stage1/sam3_building_identifier output format."""
+    rows = []
+    skipped = {
+        "missing_img_name": 0,
+        "missing_wkt": 0,
+        "bad_wkt": 0,
+        "missing_image_files": 0,
+    }
+    for i, path in enumerate(label_files, start=1):
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        img_info = doc.get("image", {}) or {}
+        img_name = img_info.get("stem", "")
+        if not img_name:
+            skipped["missing_img_name"] += 1
+            continue
+
+        # Reconstruct image filename — look for the actual file
+        pre_path = None
+        for ext in ("png", "tif", "tiff", "jpg", "jpeg"):
+            candidate = args.pre_images_dir / f"{img_name}.{ext}"
+            if candidate.exists():
+                pre_path = candidate
+                break
+        if pre_path is None:
+            pre_path = args.pre_images_dir / f"{img_name}.png"  # fallback
+
+        post_name = derive_post_name(pre_path.name, args.pre_token, args.post_token)
+        post_path = args.post_images_dir / post_name
+        if args.strict_images and (not pre_path.exists() or not post_path.exists()):
+            skipped["missing_image_files"] += 1
+            continue
+
+        width = img_info.get("width", "")
+        height = img_info.get("height", "")
+        tile_id = derive_tile_id(pre_path.name)
+
+        instances = doc.get("instances", []) or []
+        for inst in instances:
+            polygon_coords = inst.get("polygon", [])
+            wkt = _polygon_coords_to_wkt(polygon_coords)
+            if not wkt:
+                skipped["missing_wkt"] += 1
+                continue
+            poly = parse_wkt_polygon_xy(wkt)
+            if poly is None:
+                skipped["bad_wkt"] += 1
+                continue
+            wkt = polygon_xy_to_wkt(poly)
+
+            uid = inst.get("uid") or f"sam3_{uuid.uuid4()}"
+            rows.append(
+                {
+                    "event_id": args.event_id,
+                    "hazard_type": args.hazard_type,
+                    "tile_id": tile_id,
+                    "width": width,
+                    "height": height,
+                    "pre_image": str(pre_path),
+                    "post_image": str(post_path),
+                    "pre_json": "",
+                    "post_json": str(path),
+                    "bldg_uid": str(uid),
+                    "damage_subtype": "",
+                    "damage_class": "",
+                    "polygon_wkt_xy_pre": wkt,
+                    "polygon_wkt_xy_post": wkt,
+                    "sam3_confidence": inst.get("confidence", ""),
+                }
+            )
+
+        if args.log_every > 0 and i % args.log_every == 0:
+            print(
+                "index_progress",
+                f"{i}/{len(label_files)}",
+                f"({100.0 * i / len(label_files):.1f}%)",
+                "| rows",
+                len(rows),
+            )
+    return rows, skipped, len(label_files)
+
+
 def _rows_from_prediction_json(args, label_files):
     rows = []
     skipped = {
@@ -193,6 +381,13 @@ def _rows_from_prediction_json(args, label_files):
         "bad_wkt": 0,
         "missing_image_files": 0,
     }
+    # Auto-detect format from first file
+    if label_files:
+        first_doc = json.loads(label_files[0].read_text(encoding="utf-8"))
+        if _is_stage1_package_format(first_doc):
+            print("Detected stage1/sam3_building_identifier output format.")
+            return _rows_from_stage1_package_json(args, label_files)
+
     for i, path in enumerate(label_files, start=1):
         doc = json.loads(path.read_text(encoding="utf-8"))
         meta = doc.get("metadata", {}) or {}
@@ -219,9 +414,11 @@ def _rows_from_prediction_json(args, label_files):
             if not wkt:
                 skipped["missing_wkt"] += 1
                 continue
-            if parse_wkt_polygon_xy(wkt) is None:
+            poly = parse_wkt_polygon_xy(wkt)
+            if poly is None:
                 skipped["bad_wkt"] += 1
                 continue
+            wkt = polygon_xy_to_wkt(poly)
 
             uid = props.get("uid") or f"sam3_{uuid.uuid4()}"
             rows.append(
@@ -631,4 +828,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

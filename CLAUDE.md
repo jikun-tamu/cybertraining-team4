@@ -11,7 +11,7 @@ Disaster impact assessment pipeline using satellite imagery, building damage pre
 - **`pipeline/`** — combined Stage 1 + Stage 2 pipeline (formerly `II_package/`), collaborator-integrated
 - **`evaluation/`** — xView2 benchmark scripts and results
 
-**Exploration only** (not production): `exploration/` contains Mask R-CNN, PolyWorld, GeoAI_QuishengWu, and earlier SAM3 variants
+**Exploration only** (not production): `archive/` (formerly `exploration/`) contains Mask R-CNN, PolyWorld, GeoAI_QuishengWu, and earlier SAM3 variants
 
 ## Environments
 
@@ -115,13 +115,13 @@ Other outputs per image (when detections > 0):
 | `src/cybertraining_team4/` | Core project package (training, evaluation stages) |
 | `notebooks/` | EDA and validation notebooks |
 | `data/` | LA fire data: raw/ (immutable) → interim/ → processed/ |
-| `exploration/` | Experimental/comparison work (not production) |
-| `exploration/SAM3_notebooks/` | Original SAM3 Jupyter notebooks |
-| `exploration/SAM3_Final/` | Alternative SAM3 pipeline with georeferencing recovery and GeoJSON/GPKG output |
-| `exploration/PolyWorld/` | PolygonGNN (CVPR 2022) building extraction |
-| `exploration/Mask_R-CNN/` | Mask R-CNN training code |
-| `exploration/GeoAI_QuishengWu/` | GeoAI experiments |
-| `exploration/corrected_model/` | Early Mask R-CNN checkpoint (corrected_building_segmentation_model.pth) + eval results |
+| `archive/` | Experimental/comparison work, formerly `exploration/` (not production) |
+| `archive/SAM3_notebooks/` | Original SAM3 Jupyter notebooks |
+| `archive/SAM3_Final/` | Alternative SAM3 pipeline with georeferencing recovery and GeoJSON/GPKG output |
+| `archive/PolyWorld/` | PolygonGNN (CVPR 2022) building extraction |
+| `archive/Mask_R-CNN/` | Mask R-CNN training code |
+| `archive/GeoAI_QuishengWu/` | GeoAI experiments |
+| `archive/corrected_model/` | Early Mask R-CNN checkpoint (corrected_building_segmentation_model.pth) + eval results |
 
 ## GPU Notes
 

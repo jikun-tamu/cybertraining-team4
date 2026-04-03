@@ -15,7 +15,7 @@ from pathlib import Path
 
 REPO_ROOT  = Path(__file__).resolve().parents[1]
 PKG_ROOT   = Path(__file__).resolve().parent
-LA_FIRE_ROOT = Path("/media/data/la_fire_2025")
+LA_FIRE_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025")
 MANIFEST   = LA_FIRE_ROOT / "grids/chips_600m_manifest.csv"
 CHIPS_ROOT = LA_FIRE_ROOT / "chips"
 

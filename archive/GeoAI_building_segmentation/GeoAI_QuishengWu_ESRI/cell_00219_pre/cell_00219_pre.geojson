@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "cell_00219_pre",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32611" } },
+"features": [
+
+]
+}

@@ -32,10 +32,15 @@ def parse_args():
 
     # Stage-1 args
     p.add_argument(
+        "--use_stage1_package",
+        action="store_true",
+        help="Use stage1/sam3_building_identifier package instead of SAM3_Final script.",
+    )
+    p.add_argument(
         "--stage1_script",
         type=Path,
         default=Path("stage1/SAM3_Final_20260226/scripts/run_sam3_building_infer.py"),
-        help="Path to Stage-1 run script",
+        help="Path to Stage-1 run script (ignored when --use_stage1_package is set)",
     )
     p.add_argument("--stage1_backend", type=str, default="transformers", choices=["meta", "transformers"])
     p.add_argument("--stage1_device", type=str, default="cuda:0")
@@ -214,44 +219,42 @@ def main():
     py = args.python_bin
 
     # 1) Stage-1
-    run_cmd(
-        [
+    if args.use_stage1_package:
+        stage1_cmd = [
+            py, "-m", "sam3_building_identifier",
+            "--input-dir", pair_dir,
+            "--output-dir", stage1_out,
+            "--max-images", "1",
+            "--prompt", args.stage1_prompt,
+            "--min-size", str(args.stage1_min_size),
+            "--batch-size", str(args.stage1_batch_size),
+            "--device", args.stage1_device,
+            "--disaster-type", "pre",
+        ]
+        stage1_labels_dir = stage1_out / "predictions"
+    else:
+        stage1_cmd = [
             py,
             args.stage1_script,
-            "--input",
-            pair_dir,
-            "--output",
-            stage1_out,
-            "--pattern",
-            f"{tile_id}_pre_disaster.png",
-            "--max-images",
-            "1",
-            "--prompt",
-            args.stage1_prompt,
-            "--min-size",
-            str(args.stage1_min_size),
-            "--output-style",
-            args.stage1_output_style,
-            "--batch-size",
-            str(args.stage1_batch_size),
-            "--device",
-            args.stage1_device,
-            "--backend",
-            args.stage1_backend,
-        ]
-        + (
-            [
-                "--tile-size",
-                str(args.stage1_tile_size),
-                "--overlap",
-                str(args.stage1_overlap),
-            ]
+            "--input", pair_dir,
+            "--output", stage1_out,
+            "--pattern", f"{tile_id}_pre_disaster.png",
+            "--max-images", "1",
+            "--prompt", args.stage1_prompt,
+            "--min-size", str(args.stage1_min_size),
+            "--output-style", args.stage1_output_style,
+            "--batch-size", str(args.stage1_batch_size),
+            "--device", args.stage1_device,
+            "--backend", args.stage1_backend,
+        ] + (
+            ["--tile-size", str(args.stage1_tile_size),
+             "--overlap", str(args.stage1_overlap)]
             if args.stage1_tile_size and args.stage1_tile_size > 0
             else []
-        ),
-        dry_run=args.dry_run,
-        verbose=args.verbose,
-    )
+        )
+        stage1_labels_dir = stage1_out / "labels"
+
+    run_cmd(stage1_cmd, dry_run=args.dry_run, verbose=args.verbose)
 
     # 2) Shared subimages
     run_cmd(
@@ -259,7 +262,7 @@ def main():
             py,
             args.shared_script,
             "--stage1_labels_dir",
-            stage1_out / "labels",
+            stage1_labels_dir,
             "--pre_images_dir",
             pair_dir,
             "--post_images_dir",

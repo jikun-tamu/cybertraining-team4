@@ -28,7 +28,7 @@ import numpy as np
 
 PKG_ROOT = Path(__file__).resolve().parents[1]
 OLD_PREFIX = "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m"
-NEW_PREFIX = str(PKG_ROOT.parent / "data/interim/chips_600m")
+NEW_PREFIX = "/media/data/building_instance_tamu/la_fire_2025/chips"
 
 
 def fix_path(p: str) -> str:
@@ -169,7 +169,8 @@ def main():
         "m1_damage_class", "m1_damage_label",
         "m1_prob_no_damage", "m1_prob_minor", "m1_prob_major", "m1_prob_destroyed",
         "m1b_damage_class", "m1b_damage_label",
-        "m2_majority_class", "m3_quality_filtered_class",
+        "m2_majority_class", "m2b_damage_class", "m2b_damage_label",
+        "m3_quality_filtered_class",
         "n_dates_total", "n_dates_used", "n_dates_rejected", "n_dates_valid_coverage",
         "label_entropy", "is_unstable",
         "sam3_confidence",
@@ -254,6 +255,9 @@ def main():
                 "m1b_damage_class": m1b_class,
                 "m1b_damage_label": DAMAGE_LABEL.get(int(m1b_class) if m1b_class != "" else -1, "unknown"),
                 "m2_majority_class": rec.get("m2_majority_class", ""),
+                "m2b_damage_class": rec.get("m2b_coverage_vote_class", ""),
+                "m2b_damage_label": DAMAGE_LABEL.get(
+                    int(rec.get("m2b_coverage_vote_class", -1)), "unknown"),
                 "m3_quality_filtered_class": rec.get("m3_quality_filtered_class", ""),
                 "n_dates_total": rec.get("n_dates_total", ""),
                 "n_dates_used": rec.get("n_dates_used_m1m2", ""),

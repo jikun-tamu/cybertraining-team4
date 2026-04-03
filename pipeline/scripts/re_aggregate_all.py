@@ -15,14 +15,15 @@ import sys
 from pathlib import Path
 
 PKG_ROOT = Path(__file__).resolve().parents[1]
-RUN_ROOT = PKG_ROOT / "outputs/multidate_full_run"
+# Default: authoritative LA fire data at /media/data/building_instance_tamu/la_fire_2025/
+DEFAULT_RUN_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run")
 SCRIPT   = PKG_ROOT / "scripts/aggregate_multidate_predictions.py"
 PYTHON   = sys.executable
 
 
-def cells_to_reaggregate(only: list[str] | None) -> list[Path]:
+def cells_to_reaggregate(run_root: Path, only: list[str] | None) -> list[Path]:
     cells = []
-    for cell_dir in sorted(RUN_ROOT.iterdir()):
+    for cell_dir in sorted(run_root.iterdir()):
         if not cell_dir.is_dir() or not cell_dir.name.startswith("cell_"):
             continue
         if (cell_dir / "shared_base/zero_instances.marker").exists():
@@ -37,15 +38,18 @@ def cells_to_reaggregate(only: list[str] | None) -> list[Path]:
 
 def main():
     p = argparse.ArgumentParser()
+    p.add_argument("--run_root", type=Path, default=DEFAULT_RUN_ROOT,
+                   help="Root directory containing cell_XXXXX dirs (default: LA fire data)")
     p.add_argument("--cells", nargs="*", default=None,
                    help="Re-aggregate only these cells (default: all)")
     args = p.parse_args()
 
-    cells = cells_to_reaggregate(args.cells)
-    print(f"Re-aggregating {len(cells)} cells...")
+    cells = cells_to_reaggregate(args.run_root, args.cells)
+    print(f"Re-aggregating {len(cells)} cells under {args.run_root}...")
 
     n_ok = n_fail = 0
-    not_id_total = 0
+    not_id_m1b = 0
+    not_id_m2b = 0
 
     for cell_dir in cells:
         out_jsonl = cell_dir / "aggregated_predictions.jsonl"
@@ -61,19 +65,23 @@ def main():
             print(f"  [FAIL] {cell_dir.name}: {result.stderr[-200:]}")
             n_fail += 1
         else:
-            # Parse not_identifiable count from stdout
             for line in result.stdout.splitlines():
                 if "not_identifiable_m1b=" in line:
                     try:
-                        val = int(line.split("not_identifiable_m1b=")[1].split("/")[0])
-                        not_id_total += val
+                        not_id_m1b += int(line.split("not_identifiable_m1b=")[1].split("/")[0])
+                    except Exception:
+                        pass
+                if "not_identifiable_m2b=" in line:
+                    try:
+                        not_id_m2b += int(line.split("not_identifiable_m2b=")[1].split("/")[0])
                     except Exception:
                         pass
             n_ok += 1
             print(f"  [ok] {cell_dir.name}")
 
     print(f"\nDone: {n_ok} succeeded, {n_fail} failed")
-    print(f"Total 'not identifiable' buildings (m1b): {not_id_total}")
+    print(f"Total 'not identifiable' buildings (m1b): {not_id_m1b}")
+    print(f"Total 'not identifiable' buildings (m2b): {not_id_m2b}")
 
 
 if __name__ == "__main__":

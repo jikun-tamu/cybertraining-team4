@@ -101,12 +101,36 @@ def infer_tile_id(pre_image: Path) -> str:
     return stem
 
 
+def resolve_stage1_labels_dir(stage1_dir: Path) -> Path:
+    """Return the labels/predictions directory, preferring 'predictions/' (stage1 package)."""
+    preds = stage1_dir / "predictions"
+    if preds.exists():
+        return preds
+    return stage1_dir / "labels"
+
+
+def count_stage1_instances(label_files: list[Path]) -> int:
+    """Count instances across label files, handling both SAM3_Final and stage1 package formats."""
+    total = 0
+    for lf in label_files:
+        try:
+            doc = json.loads(lf.read_text())
+            if "instances" in doc and isinstance(doc["instances"], list):
+                total += len(doc["instances"])
+            else:
+                total += len((doc.get("features", {}) or {}).get("xy", []))
+        except Exception:
+            pass
+    return total
+
+
 def run_stage1(
     cell_id: str,
     pre_image: Path,
     cell_out: Path,
     device: str,
     reuse_from: Path | None,
+    use_stage1_package: bool = False,
 ) -> tuple[Path, str] | None:
     """Run (or reuse) Stage 1. Returns (stage1_dir, tile_id) or None on failure."""
     stage1_dir = cell_out / "stage1"
@@ -134,26 +158,40 @@ def run_stage1(
             return stage1_dir, tile_id
 
     # Run Stage 1 fresh
-    stage1_script = PKG_ROOT / "stage1/SAM3_Final_20260226/scripts/run_sam3_building_infer.py"
-    pattern = pre_link_name
     env = {**os.environ, "HF_HUB_OFFLINE": "1"}
-    rc = run(
-        [PYTHON, stage1_script,
-         "--input", pair_dir,
-         "--output", stage1_dir,
-         "--pattern", pattern,
-         "--max-images", "1",
-         "--prompt", "building",
-         "--min-size", "30",
-         "--output-style", "notebook",
-         "--batch-size", "1",
-         "--device", device,
-         "--backend", "meta",
-         "--tile-size", "512",
-         "--overlap", "64"],
-        cwd=PKG_ROOT, env=env,
-        label=f"stage1 {cell_id}",
-    )
+    if use_stage1_package:
+        rc = run(
+            [PYTHON, "-m", "sam3_building_identifier",
+             "--input-dir", pair_dir,
+             "--output-dir", stage1_dir,
+             "--max-images", "1",
+             "--prompt", "building",
+             "--min-size", "30",
+             "--batch-size", "1",
+             "--device", device,
+             "--disaster-type", "pre"],
+            cwd=PKG_ROOT, env=env,
+            label=f"stage1 {cell_id}",
+        )
+    else:
+        stage1_script = PKG_ROOT / "stage1/SAM3_Final_20260226/scripts/run_sam3_building_infer.py"
+        rc = run(
+            [PYTHON, stage1_script,
+             "--input", pair_dir,
+             "--output", stage1_dir,
+             "--pattern", pre_link_name,
+             "--max-images", "1",
+             "--prompt", "building",
+             "--min-size", "30",
+             "--output-style", "notebook",
+             "--batch-size", "1",
+             "--device", device,
+             "--backend", "meta",
+             "--tile-size", "512",
+             "--overlap", "64"],
+            cwd=PKG_ROOT, env=env,
+            label=f"stage1 {cell_id}",
+        )
     if rc != 0:
         return None
     return stage1_dir, tile_id
@@ -180,14 +218,9 @@ def run_shared_base(
         return out_csv
 
     # Check how many instances Stage 1 found — skip shared_base if 0
-    label_files = list((stage1_dir / "labels").glob("*_prediction.json"))
-    n_instances = 0
-    for lf in label_files:
-        try:
-            doc = json.loads(lf.read_text())
-            n_instances += len((doc.get("features", {}) or {}).get("xy", []))
-        except Exception:
-            pass
+    labels_dir = resolve_stage1_labels_dir(stage1_dir)
+    label_files = list(labels_dir.glob("*_prediction.json"))
+    n_instances = count_stage1_instances(label_files)
     if n_instances == 0:
         print(f"  [shared_base] 0 Stage-1 instances — writing empty marker, skipping")
         shared_dir.mkdir(parents=True, exist_ok=True)
@@ -202,7 +235,7 @@ def run_shared_base(
     script = PKG_ROOT / "scripts/generate_shared_instance_subimages.py"
     rc = run(
         [PYTHON, script,
-         "--stage1_labels_dir", stage1_dir / "labels",
+         "--stage1_labels_dir", labels_dir,
          "--pre_images_dir", pair_dir,
          "--post_images_dir", pair_dir,
          "--out_root", shared_dir,
@@ -437,12 +470,33 @@ def parse_args():
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--reuse_stage1_from", type=Path, default=None,
                    help="Look here for existing la_fire_{cell_id}/stage1/ outputs to reuse.")
+    p.add_argument("--use_stage1_package", action="store_true",
+                   help="Use stage1/sam3_building_identifier package instead of SAM3_Final script.")
+    p.add_argument(
+        "--workflow",
+        choices=["training", "realworld"],
+        default="realworld",
+        help=(
+            "Workflow mode. "
+            "'training': single pre/post pair per cell, no multidate aggregation "
+            "(use run_instance_impact_driver.py instead for this). "
+            "'realworld': multiple post-disaster dates per cell, quality filtering, "
+            "identifiability-first logic, aggregation across valid dates (includes M2b). "
+            "Default: realworld."
+        ),
+    )
     return p.parse_args()
 
 
 def main():
     args = parse_args()
     args.out_root.mkdir(parents=True, exist_ok=True)
+
+    if args.workflow == "training":
+        print("[workflow] TRAINING mode — single post date, no multidate aggregation")
+        print("[workflow] For full single-pair workflow, consider run_instance_impact_driver.py")
+    else:
+        print("[workflow] REALWORLD mode — multiple post dates, quality filtering, M2b aggregation")
 
     manifest = load_manifest(args.manifest)
     print(f"Loaded manifest: {len(manifest)} cells total")
@@ -476,7 +530,10 @@ def main():
         cell_out.mkdir(parents=True, exist_ok=True)
 
         # ── Step 1: Stage 1 ──────────────────────────────────────────────────
-        result = run_stage1(cell_id, pre_image, cell_out, args.device, args.reuse_stage1_from)
+        result = run_stage1(
+            cell_id, pre_image, cell_out, args.device, args.reuse_stage1_from,
+            use_stage1_package=args.use_stage1_package,
+        )
         if result is None:
             print(f"[FAIL] {cell_id}: Stage 1 failed")
             failed_cells.append(cell_id)
@@ -484,16 +541,13 @@ def main():
         stage1_dir, tile_id = result
 
         # Check if Stage 1 produced any instances
-        label_files = list((stage1_dir / "labels").glob("*_prediction.json"))
+        s1_labels_dir = resolve_stage1_labels_dir(stage1_dir)
+        label_files = list(s1_labels_dir.glob("*_prediction.json"))
         if label_files:
-            try:
-                doc = json.loads(label_files[0].read_text())
-                n_inst = len((doc.get("features", {}) or {}).get("xy", []))
-                print(f"  [stage1] instances={n_inst}")
-                if n_inst == 0:
-                    print(f"  [stage1] WARNING: 0 instances detected — continuing anyway")
-            except Exception:
-                pass
+            n_inst = count_stage1_instances(label_files)
+            print(f"  [stage1] instances={n_inst}")
+            if n_inst == 0:
+                print(f"  [stage1] WARNING: 0 instances detected — continuing anyway")
 
         pair_dir = cell_out / "pair_inputs"
 
@@ -532,9 +586,20 @@ def main():
             print(f"  [WARN] {cell_id}: Stage 2a failed — continuing with dates")
 
         # ── Step 4: Per-date Stage 2b ─────────────────────────────────────────
-        all_dates = [date for date, _ in posts]
+        if args.workflow == "training":
+            # Training mode: use only the first available post date
+            use_posts = [(date, path) for date, path in posts if path.exists()][:1]
+            if not use_posts:
+                print(f"[FAIL] {cell_id}: no existing post images for training mode")
+                failed_cells.append(cell_id)
+                continue
+            print(f"  [training] using single post date: {use_posts[0][0]}")
+        else:
+            use_posts = posts
+
+        all_dates = [date for date, _ in use_posts]
         date_results = {}
-        for date, post_path in posts:
+        for date, post_path in use_posts:
             if not post_path.exists():
                 print(f"  [date {date}] post image missing: {post_path}")
                 date_results[date] = False
@@ -546,9 +611,12 @@ def main():
         print(f"\n  [dates] {n_ok}/{len(date_results)} dates succeeded")
 
         # ── Step 5: Aggregation ───────────────────────────────────────────────
-        agg_ok = run_aggregation(cell_id, cell_out)
-        if not agg_ok:
-            print(f"  [WARN] {cell_id}: aggregation failed")
+        if args.workflow == "training":
+            print(f"  [training] skipping aggregation (single date)")
+        else:
+            agg_ok = run_aggregation(cell_id, cell_out)
+            if not agg_ok:
+                print(f"  [WARN] {cell_id}: aggregation failed")
 
         # ── Summarize ─────────────────────────────────────────────────────────
         summary = summarize_cell(cell_id, cell_out, all_dates)

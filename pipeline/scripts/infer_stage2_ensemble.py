@@ -19,17 +19,33 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from train_stage2 import (
-    SiameseDamageModel,
-    collate_batch,
-    coral_probs_from_logits,
-    load_mask_tensor,
-    load_rgb_tensor,
-    macro_f1_from_cm,
-    confusion_matrix,
-    qwk_from_cm,
-    read_rows,
-)
+# Prefer clean module; fall back to monolithic train_stage2 for compatibility.
+try:
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from stage2b_model import (
+        SiameseDamageModel,
+        collate_batch,
+        coral_probs_from_logits,
+        load_mask_tensor,
+        load_rgb_tensor,
+        macro_f1_from_cm,
+        confusion_matrix,
+        qwk_from_cm,
+        read_rows,
+    )
+except ImportError:
+    from train_stage2 import (
+        SiameseDamageModel,
+        collate_batch,
+        coral_probs_from_logits,
+        load_mask_tensor,
+        load_rgb_tensor,
+        macro_f1_from_cm,
+        confusion_matrix,
+        qwk_from_cm,
+        read_rows,
+    )
 
 
 def parse_args():

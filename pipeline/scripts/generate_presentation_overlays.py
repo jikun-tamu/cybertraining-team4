@@ -33,7 +33,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patheffects import withStroke
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-LA_FIRE_ROOT   = Path("/media/data/la_fire_2025")
+LA_FIRE_ROOT   = Path("/media/data/building_instance_tamu/la_fire_2025")
 CHIPS_ROOT     = LA_FIRE_ROOT / "chips"
 GEOJSON        = LA_FIRE_ROOT / "final_maps/maps/building_damage.geojson"
 RUN_ROOT       = LA_FIRE_ROOT / "stage2_damage/multidate_full_run"

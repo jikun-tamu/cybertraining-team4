@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """Aggregate Stage-2b predictions across multiple post dates per building instance.
 
-Reads per-date Stage-2b JSONL files and produces three aggregation strategies:
-  1. prob_avg      — average calibrated probabilities across all usable dates,
-                     then argmax. Uses dates where tile_quality_ok=true.
-  2. majority_vote — most common y_pred_ensemble across all usable dates.
-                     Ties broken by prob_avg argmax.
-  3. quality_avg   — like prob_avg but additionally requires crop-level quality_ok=true
-                     per instance-date; falls back to prob_avg if no crops pass.
+Reads per-date Stage-2b JSONL files and produces five aggregation strategies:
+
+  M1  — prob_avg:      average calibrated probabilities across tile-quality-ok dates,
+                        then argmax. NOT_IDENTIFIABLE if no tiles pass.
+  M1b — coverage_avg:  like M1 but additionally requires per-building crop coverage
+                        (tile_quality_ok AND crop_quality_ok). NOT_IDENTIFIABLE if
+                        no date has valid coverage for this building.
+  M2  — majority_vote: most common y_pred across tile-quality-ok dates.
+                        Tie broken by M1 prob_avg argmax. NOT_IDENTIFIABLE if no tiles pass.
+  M2b — coverage_vote: **Real-world multi-image rule.** Majority vote across dates
+                        where the building is identifiable (tile_quality_ok AND
+                        crop_quality_ok). NOT_IDENTIFIABLE only if the building was
+                        never sufficiently captured. Tie broken by highest damage class
+                        (conservative: assume worst plausible outcome when ambiguous).
+  M3  — quality_avg:   like M1 but requires both tile and crop quality; falls back
+                        to M1 on zero valid dates.
 
 Also computes per-instance agreement metrics:
   - n_dates_total, n_dates_used, dates_used, dates_skipped
@@ -256,6 +265,36 @@ def main():
             m1b_probs = avg_probs([d["probs_cal"] for d in usable_1b if d["probs_cal"]])
             m1b_class = safe_argmax(m1b_probs)
 
+        # ── Method 2b: coverage-aware majority vote (real-world rule) ─────────
+        # Identifiability-first, then damage aggregation:
+        #   Step 1: Determine valid dates — building must be sufficiently captured
+        #           (tile_quality_ok=True AND crop_quality_ok=True).
+        #   Step 2: If zero valid dates → NOT_IDENTIFIABLE (building never captured).
+        #   Step 3: Majority vote across per-date damage labels from valid dates only.
+        #   Tie-break: highest damage class wins (conservative — assume worst plausible
+        #   outcome when evidence is split, since under-estimating damage is riskier
+        #   than over-estimating in disaster response).
+        #
+        # This is the authoritative rule for real-world multi-image post-disaster
+        # assessment (e.g. LA fire workflow).
+        if not usable_1b:
+            m2b_class = NOT_IDENTIFIABLE
+            m2b_n_valid = 0
+            m2b_vote_counts = {}
+        else:
+            m2b_labels = [d["y_pred"] for d in usable_1b]
+            m2b_vote_counts = dict(Counter(m2b_labels))
+            m2b_n_valid = len(m2b_labels)
+            # Majority vote with max-class tie-break
+            m2b_class = majority_vote(m2b_labels, tiebreak_probs=None)
+            # tiebreak_probs=None → falls through to min(candidates) in majority_vote,
+            # but we want max(candidates) for conservative tie-break. Override here:
+            counts = Counter(m2b_labels)
+            max_count = max(counts.values())
+            candidates = [lbl for lbl, cnt in counts.items() if cnt == max_count]
+            if len(candidates) > 1:
+                m2b_class = max(candidates)  # conservative: highest damage class wins
+
         # ── Agreement metrics ─────────────────────────────────────────────────
         all_labels = [d["y_pred"] for d in all_dates_data if d["y_pred"] >= 0]
         used_labels_12 = [d["y_pred"] for d in usable_12 if d["y_pred"] >= 0]
@@ -296,6 +335,10 @@ def main():
             # Method 1b: per-building coverage-aware (-1 = "not identifiable")
             "m1b_coverage_class": m1b_class,
             "m1b_coverage_probs": [round(p, 4) for p in m1b_probs],
+            # Method 2b: coverage-aware majority vote (real-world rule)
+            "m2b_coverage_vote_class": m2b_class,
+            "m2b_n_valid_dates": m2b_n_valid,
+            "m2b_vote_counts": m2b_vote_counts,
             # Agreement
             "label_entropy": lbl_entropy,
             "is_unstable": is_unstable,
@@ -319,6 +362,7 @@ def main():
         "m2_majority_class",
         "m3_quality_filtered_class",
         "m1b_coverage_class", "m1b_coverage_probs",
+        "m2b_coverage_vote_class", "m2b_n_valid_dates", "m2b_vote_counts",
         "label_entropy", "is_unstable", "all_date_labels",
     ]
     with open(args.out_csv, "w", newline="") as f:
@@ -331,14 +375,20 @@ def main():
             flat["dates_coverage_invalid"] = "|".join(flat.get("dates_coverage_invalid", []))
             flat["m1b_coverage_probs"] = str(flat["m1b_coverage_probs"])
             flat["m1_prob_avg_probs"] = str(flat["m1_prob_avg_probs"])
+            flat["m2b_vote_counts"] = str(flat.get("m2b_vote_counts", {}))
             flat["all_date_labels"] = str(flat["all_date_labels"])
             writer.writerow(flat)
 
     print(f"[done] instances={len(results)}")
     unstable = sum(1 for r in results if r["is_unstable"])
-    not_id = sum(1 for r in results if r["m1b_coverage_class"] == NOT_IDENTIFIABLE)
+    not_id_m1b = sum(1 for r in results if r["m1b_coverage_class"] == NOT_IDENTIFIABLE)
+    not_id_m2b = sum(1 for r in results if r["m2b_coverage_vote_class"] == NOT_IDENTIFIABLE)
     print(f"[summary] unstable={unstable}/{len(results)}")
-    print(f"[summary] not_identifiable_m1b={not_id}/{len(results)}")
+    print(f"[summary] not_identifiable_m1b={not_id_m1b}/{len(results)}")
+    print(f"[summary] not_identifiable_m2b={not_id_m2b}/{len(results)}")
+    # M2b damage distribution
+    m2b_dist = Counter(r["m2b_coverage_vote_class"] for r in results)
+    print(f"[summary] m2b_distribution={dict(sorted(m2b_dist.items()))}")
     # Date rejection summary
     all_dates = list(date_tile_ok.keys())
     for date in all_dates:
