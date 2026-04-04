@@ -123,6 +123,20 @@ def _parse_args(argv=None) -> argparse.Namespace:
         help="Maximum mask area (pixels).  None → no upper limit.",
     )
     inf.add_argument(
+        "--tile-size",
+        type=int,
+        default=512,
+        help="Split images into NxN tiles before inference. "
+             "SAM3 downscales internally, so tiling improves recall on large images. "
+             "Set to 0 to disable tiling and process full images.",
+    )
+    inf.add_argument(
+        "--overlap",
+        type=int,
+        default=64,
+        help="Overlap in pixels between adjacent tiles.",
+    )
+    inf.add_argument(
         "--batch-size",
         type=int,
         default=1,
@@ -141,8 +155,9 @@ def _parse_args(argv=None) -> argparse.Namespace:
     poly.add_argument(
         "--min-polygon-area",
         type=float,
-        default=10.0,
-        help="Minimum polygon area (sq-pixels) after vectorization.",
+        default=100.0,
+        help="Minimum polygon area (sq-pixels) after vectorization. "
+             "Filters stitching artifacts at tile boundaries.",
     )
     poly.add_argument(
         "--simplify-tolerance",
@@ -211,6 +226,7 @@ def main(argv=None) -> int:
     _configure_logging(args.verbose)
 
     # Build config from CLI args
+    tile_size = args.tile_size if args.tile_size and args.tile_size > 0 else None
     cfg = PipelineConfig(
         input_dir=args.input_dir,
         output_dir=args.output_dir,
@@ -223,6 +239,8 @@ def main(argv=None) -> int:
         text_prompt=args.text_prompt,
         min_size=args.min_size,
         max_size=args.max_size,
+        tile_size=tile_size,
+        tile_overlap=args.overlap,
         batch_size=args.batch_size,
         polygon_epsilon=args.polygon_epsilon,
         min_polygon_area=args.min_polygon_area,

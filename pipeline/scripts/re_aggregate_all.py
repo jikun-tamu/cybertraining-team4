@@ -14,9 +14,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from la_fire_paths import canonical_run_root
+
 PKG_ROOT = Path(__file__).resolve().parents[1]
 # Default: authoritative LA fire data at /media/data/building_instance_tamu/la_fire_2025/
-DEFAULT_RUN_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run")
+DEFAULT_RUN_ROOT = canonical_run_root()
 SCRIPT   = PKG_ROOT / "scripts/aggregate_multidate_predictions.py"
 PYTHON   = sys.executable
 

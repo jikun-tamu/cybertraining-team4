@@ -27,6 +27,8 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 
+from la_fire_paths import canonical_run_root, canonical_la_fire_root
+
 PKG_ROOT = Path(__file__).resolve().parents[1]
 
 # Damage class styling
@@ -503,9 +505,9 @@ def write_summary_report(features: list[dict], highlighted: list,
         "",
         "| File | Description |",
         "|---|---|",
-        "| `outputs/multidate_full_run/building_damage_all_cells.csv` | Flat CSV, all building instances |",
-        "| `outputs/maps/building_damage.geojson` | WGS84 GeoJSON polygons |",
-        "| `outputs/maps/building_damage.gpkg` | UTM GeoPackage |",
+        "| `stage2_damage/multidate_full_run/building_damage_all_cells.csv` | Flat CSV, all building instances |",
+        "| `stage2_damage/multidate_full_run/building_damage_all_cells.geojson` | WGS84 GeoJSON polygons |",
+        "| `stage2_damage/multidate_full_run/building_damage_all_cells.gpkg` | UTM GeoPackage |",
         "",
         "## Notes",
         "",
@@ -526,11 +528,11 @@ def write_summary_report(features: list[dict], highlighted: list,
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--geojson", type=Path,
-                   default=PKG_ROOT / "outputs/maps/building_damage.geojson")
+                   default=canonical_run_root() / "building_damage_all_cells.geojson")
     p.add_argument("--out_dir", type=Path,
-                   default=PKG_ROOT / "outputs/maps")
+                   default=canonical_la_fire_root() / "maps")
     p.add_argument("--run_root", type=Path,
-                   default=PKG_ROOT / "outputs/multidate_full_run")
+                   default=canonical_run_root())
     args = p.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -30,25 +30,10 @@ def parse_args():
         help="Optional tile id override. If omitted, inferred from pre image stem.",
     )
 
-    # Stage-1 args
-    p.add_argument(
-        "--use_stage1_package",
-        action="store_true",
-        help="Use stage1/sam3_building_identifier package instead of SAM3_Final script.",
-    )
-    p.add_argument(
-        "--stage1_script",
-        type=Path,
-        default=Path("stage1/SAM3_Final_20260226/scripts/run_sam3_building_infer.py"),
-        help="Path to Stage-1 run script (ignored when --use_stage1_package is set)",
-    )
-    p.add_argument("--stage1_backend", type=str, default="transformers", choices=["meta", "transformers"])
+    # Stage-1 args (uses sam3_building_identifier package with 512px tiling)
     p.add_argument("--stage1_device", type=str, default="cuda:0")
     p.add_argument("--stage1_prompt", type=str, default="building")
-    p.add_argument("--stage1_min_size", type=int, default=100)
-    p.add_argument("--stage1_output_style", type=str, default="notebook", choices=["notebook", "tiled"])
-    p.add_argument("--stage1_tile_size", type=int, default=0, help="Optional Stage1 tiling size (0 disables)")
-    p.add_argument("--stage1_overlap", type=int, default=64, help="Stage1 tile overlap when tiling is enabled")
+    p.add_argument("--stage1_min_size", type=int, default=30)
     p.add_argument("--stage1_batch_size", type=int, default=1, help="Stage1 inference batch size")
 
     # Shared artifact args
@@ -218,41 +203,21 @@ def main():
 
     py = args.python_bin
 
-    # 1) Stage-1
-    if args.use_stage1_package:
-        stage1_cmd = [
-            py, "-m", "sam3_building_identifier",
-            "--input-dir", pair_dir,
-            "--output-dir", stage1_out,
-            "--max-images", "1",
-            "--prompt", args.stage1_prompt,
-            "--min-size", str(args.stage1_min_size),
-            "--batch-size", str(args.stage1_batch_size),
-            "--device", args.stage1_device,
-            "--disaster-type", "pre",
-        ]
-        stage1_labels_dir = stage1_out / "predictions"
-    else:
-        stage1_cmd = [
-            py,
-            args.stage1_script,
-            "--input", pair_dir,
-            "--output", stage1_out,
-            "--pattern", f"{tile_id}_pre_disaster.png",
-            "--max-images", "1",
-            "--prompt", args.stage1_prompt,
-            "--min-size", str(args.stage1_min_size),
-            "--output-style", args.stage1_output_style,
-            "--batch-size", str(args.stage1_batch_size),
-            "--device", args.stage1_device,
-            "--backend", args.stage1_backend,
-        ] + (
-            ["--tile-size", str(args.stage1_tile_size),
-             "--overlap", str(args.stage1_overlap)]
-            if args.stage1_tile_size and args.stage1_tile_size > 0
-            else []
-        )
-        stage1_labels_dir = stage1_out / "labels"
+    # 1) Stage-1 via sam3_building_identifier package (tiled by default)
+    stage1_cmd = [
+        py, "-m", "sam3_building_identifier",
+        "--input-dir", pair_dir,
+        "--output-dir", stage1_out,
+        "--max-images", "1",
+        "--prompt", args.stage1_prompt,
+        "--min-size", str(args.stage1_min_size),
+        "--tile-size", "512",
+        "--overlap", "64",
+        "--batch-size", str(args.stage1_batch_size),
+        "--device", args.stage1_device,
+        "--disaster-type", "pre",
+    ]
+    stage1_labels_dir = stage1_out / "predictions"
 
     run_cmd(stage1_cmd, dry_run=args.dry_run, verbose=args.verbose)
 

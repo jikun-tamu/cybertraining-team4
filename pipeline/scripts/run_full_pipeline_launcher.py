@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Parallel full-run launcher for all 295 LA fire cells.
+"""Parallel full-run launcher for all 295 LA Fire cells under the canonical data root.
 
 Splits cells into two equal batches and runs them in parallel on cuda:0 and cuda:1.
 Each batch calls run_multidate_experiment.py.
 
-Outputs go to outputs/multidate_full_run/.
-Reuses Stage-1 outputs from outputs/multidate_experiment/ where available.
+Outputs go to `/media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run`.
+Optional Stage-1 reuse should also point at canonical LA Fire outputs.
 
 Usage
 -----
@@ -23,13 +23,12 @@ import sys
 import time
 from pathlib import Path
 
-PKG_ROOT = Path(__file__).resolve().parents[1]
-OLD_PREFIX = "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m"
-NEW_PREFIX = str(PKG_ROOT.parent / "data/interim/chips_600m")
+from la_fire_paths import canonical_manifest_path, canonical_run_root
 
-MANIFEST = PKG_ROOT.parent / "data/processed/chips_600m_manifest.csv"
-OUT_ROOT = PKG_ROOT / "outputs/multidate_full_run"
-REUSE_FROM = PKG_ROOT / "outputs/multidate_experiment"
+PKG_ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = canonical_manifest_path()
+OUT_ROOT = canonical_run_root()
+REUSE_FROM = None
 PYTHON = sys.executable
 
 CHUNK_SIZE = 30   # cells per subprocess call (limits per-process memory / log size)
@@ -61,8 +60,9 @@ def run_batch(cells: list[str], device: str, log_path: Path) -> int:
         "--manifest", str(MANIFEST),
         "--out_root", str(OUT_ROOT),
         "--device", device,
-        "--reuse_stage1_from", str(REUSE_FROM),
     ]
+    if REUSE_FROM is not None:
+        cmd.extend(["--reuse_stage1_from", str(REUSE_FROM)])
     env = {**os.environ, "HF_HUB_OFFLINE": "1"}
     with open(log_path, "a") as log:
         result = subprocess.run(cmd, cwd=str(PKG_ROOT), env=env,
@@ -156,8 +156,9 @@ def main():
                 "--manifest", str(MANIFEST),
                 "--out_root", str(OUT_ROOT),
                 "--device", "cuda:0",   # always cuda:0 within the isolated env
-                "--reuse_stage1_from", str(REUSE_FROM),
             ]
+            if REUSE_FROM is not None:
+                cmd.extend(["--reuse_stage1_from", str(REUSE_FROM)])
             # Use CUDA_VISIBLE_DEVICES to isolate GPUs — prevents cross-device tensor errors
             env = {**os.environ, "HF_HUB_OFFLINE": "1",
                    "CUDA_VISIBLE_DEVICES": gpu_idx}

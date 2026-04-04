@@ -134,10 +134,17 @@ def _vectorize_via_orthogonalize(
         return []
 
     instances: List[Dict[str, Any]] = []
-    for inst_id, row in enumerate(gdf.itertuples(), start=1):
+    inst_id = 0
+    for row in gdf.itertuples():
         geom = row.geometry
         if geom is None or geom.is_empty:
             continue
+
+        # Post-filter: skip polygons smaller than min_area
+        if geom.area < min_area:
+            continue
+
+        inst_id += 1
 
         # Find which mask label corresponds to this polygon via centroid lookup
         cx, cy = geom.centroid.x, geom.centroid.y

@@ -28,10 +28,12 @@ import matplotlib.patheffects as patheffects
 from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.collections import PatchCollection
 
+from la_fire_paths import canonical_chips_root, canonical_la_fire_root, canonical_run_root
+
 # ── Paths ────────────────────────────────────────────────────────────────────
-LA_FIRE_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025")
-CHIPS_ROOT   = LA_FIRE_ROOT / "chips"
-RUN_ROOT     = LA_FIRE_ROOT / "stage2_damage/multidate_full_run"
+LA_FIRE_ROOT = canonical_la_fire_root()
+CHIPS_ROOT   = canonical_chips_root()
+RUN_ROOT     = canonical_run_root()
 
 DAMAGE_COLORS = {
     0:  (0.18, 0.80, 0.44),   # green  — no damage
@@ -62,13 +64,90 @@ def parse_args():
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def parse_wkt_polygon_xy(wkt: str) -> np.ndarray | None:
-    if not wkt or not wkt.strip().upper().startswith("POLYGON"):
+def _parse_ring_text(text: str) -> np.ndarray | None:
+    pts = []
+    for chunk in text.split(","):
+        nums = [float(x) for x in WKT_FLOAT_RE.findall(chunk)]
+        if len(nums) >= 2:
+            pts.append((nums[0], nums[1]))
+    if len(pts) >= 2 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    return np.array(pts, dtype=np.float32) if pts else None
+
+
+def _extract_wkt_rings(wkt: str, geom_type: str) -> list[np.ndarray | None]:
+    body = wkt.strip()[len(geom_type):].strip()
+    if not (body.startswith("(") and body.endswith(")")):
+        return []
+    groups = []
+    start = None
+    depth = 0
+    for idx, ch in enumerate(body):
+        if ch == "(":
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0 and start is not None:
+                groups.append(body[start:idx + 1])
+                start = None
+    if geom_type == "POLYGON":
+        return [_parse_ring_text(groups[0][1:-1])] if groups else []
+    rings = []
+    for poly_group in groups:
+        inner = poly_group[1:-1].strip()
+        sub_groups = []
+        start = None
+        depth = 0
+        for idx, ch in enumerate(inner):
+            if ch == "(":
+                if depth == 0:
+                    start = idx
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0 and start is not None:
+                    sub_groups.append(inner[start:idx + 1])
+                    start = None
+        if sub_groups:
+            rings.append(_parse_ring_text(sub_groups[0][1:-1]))
+    return rings
+
+
+def parse_wkt_geometry_xy(wkt: str) -> list[np.ndarray] | None:
+    if not wkt:
         return None
-    nums = [float(x) for x in WKT_FLOAT_RE.findall(wkt)]
-    if len(nums) < 6 or len(nums) % 2 != 0:
+    try:
+        from shapely import wkt as shapely_wkt  # type: ignore
+
+        geom = shapely_wkt.loads(wkt)
+        if geom.geom_type == "Polygon":
+            arr = np.array(geom.exterior.coords[:-1], dtype=np.float32)
+            return [arr] if len(arr) >= 3 else None
+        if geom.geom_type == "MultiPolygon":
+            polys = []
+            for poly in geom.geoms:
+                arr = np.array(poly.exterior.coords[:-1], dtype=np.float32)
+                if len(arr) >= 3:
+                    polys.append(arr)
+            return polys or None
+    except Exception:
+        pass
+    upper = wkt.strip().upper()
+    if upper.startswith("POLYGON"):
+        rings = _extract_wkt_rings(wkt, "POLYGON")
+    elif upper.startswith("MULTIPOLYGON"):
+        rings = _extract_wkt_rings(wkt, "MULTIPOLYGON")
+    else:
         return None
-    return np.array(nums, dtype=np.float32).reshape(-1, 2)
+    valid = [ring for ring in rings if ring is not None and len(ring) >= 3]
+    return valid or None
+
+
+def geometry_centroid(polys: list[np.ndarray]) -> tuple[float, float]:
+    pts = np.vstack(polys)
+    return float(pts[:, 0].mean()), float(pts[:, 1].mean())
 
 
 def best_post_date(cell_id: str, run_root: Path, chips_root: Path):
@@ -163,13 +242,26 @@ def load_buildings(cell_id: str, run_root: Path):
         for row in csv.DictReader(f):
             uid = row.get("bldg_uid", "")
             wkt = row.get("polygon_wkt_xy_pre", "")
-            pts = parse_wkt_polygon_xy(wkt)
-            if pts is None:
+            polys = parse_wkt_geometry_xy(wkt)
+            if polys is None:
+                continue
+            # Filter out polygons with georeferenced (non-pixel) coordinates.
+            # Pixel coords should be in [0, ~2000]; geo coords are 1e6+.
+            MAX_PIXEL = 10000
+            bad = False
+            for pts in polys:
+                for x, y in pts:
+                    if abs(x) > MAX_PIXEL or abs(y) > MAX_PIXEL:
+                        bad = True
+                        break
+                if bad:
+                    break
+            if bad:
                 continue
             info = m2b_data.get(uid, {"class": -1, "confidence": 0.25, "n_valid": 0})
             buildings.append({
                 "uid": uid,
-                "polygon_xy": pts,
+                "polygon_geoms": polys,
                 "m2b_class": info["class"],
                 "confidence": info["confidence"],
                 "n_valid": info["n_valid"],
@@ -196,15 +288,17 @@ def make_overlay(cell_id: str, buildings: list[dict], bg_img: np.ndarray,
         alpha = 0.15 + 0.55 * max(0, (conf - 0.25) / 0.75)
         alpha = max(0.15, min(alpha, 0.70))
 
-        pts = b["polygon_xy"]
-        poly = MplPolygon(pts, closed=True, facecolor=(*color, alpha),
-                          edgecolor=(*color, min(alpha + 0.3, 1.0)),
-                          linewidth=0.8)
-        ax.add_patch(poly)
+        polys = b["polygon_geoms"]
+        for pts in polys:
+            poly = MplPolygon(pts, closed=True, facecolor=(*color, alpha),
+                              edgecolor=(*color, min(alpha + 0.3, 1.0)),
+                              linewidth=0.8)
+            ax.add_patch(poly)
 
         # Label at centroid
-        cx, cy = pts[:, 0].mean(), pts[:, 1].mean()
-        label = str(cls) if cls >= 0 else "?"
+        cx, cy = geometry_centroid(polys)
+        label_cls = str(cls) if cls >= 0 else "?"
+        label = f"{label_cls} {conf:.2f}"
         ax.text(cx, cy, label, fontsize=4, ha="center", va="center",
                 color="white", fontweight="bold",
                 path_effects=[patheffects.withStroke(
@@ -251,11 +345,18 @@ def main():
     print(f"Generating QC overlays for {len(all_cells)} cells → {args.out_dir}")
 
     n_ok = n_skip = 0
+    all_buildings = []  # collect for summary report
+
     for i, cell_id in enumerate(all_cells, 1):
         buildings = load_buildings(cell_id, args.run_root)
         if not buildings:
             n_skip += 1
             continue
+
+        # Tag each building with its cell for the report
+        for b in buildings:
+            b["cell_id"] = cell_id
+        all_buildings.extend(buildings)
 
         result = best_post_date(cell_id, args.run_root, args.chips_root)
         if result is None:
@@ -267,14 +368,69 @@ def main():
         bg_img = read_tif_rgb(tif_path)
         out_path = args.out_dir / f"{cell_id}_qc_m2b.png"
 
-        make_overlay(cell_id, buildings, bg_img, date_str, out_path, dpi=args.dpi)
-        n_ok += 1
+        try:
+            make_overlay(cell_id, buildings, bg_img, date_str, out_path, dpi=args.dpi)
+            n_ok += 1
+        except Exception as e:
+            print(f"  [{i}/{len(all_cells)}] {cell_id}: ERROR — {e}")
+            n_skip += 1
+            continue
 
         if i % 10 == 0 or i == len(all_cells):
             print(f"  [{i}/{len(all_cells)}] done={n_ok} skip={n_skip}")
 
     print(f"\n[done] {n_ok} overlays generated, {n_skip} skipped")
     print(f"[done] output: {args.out_dir}")
+
+    # ── Summary report ──────────────────────────────────────────────────
+    total = len(all_buildings)
+    class_counts = Counter(b["m2b_class"] for b in all_buildings)
+    cells_with_bldgs = len(set(b["cell_id"] for b in all_buildings))
+
+    report_lines = [
+        "=" * 60,
+        "  PIPELINE RUN SUMMARY",
+        "=" * 60,
+        f"  Total cells in manifest:       {len(all_cells)}",
+        f"  Cells with buildings:          {cells_with_bldgs}",
+        f"  QC overlays generated:         {n_ok}",
+        f"  Cells skipped:                 {n_skip}",
+        "",
+        f"  Total buildings detected:      {total}",
+        "-" * 60,
+        "  Damage classification (M2b):",
+    ]
+    for cls_id in sorted(class_counts.keys()):
+        label = DAMAGE_LABELS.get(cls_id, f"class_{cls_id}")
+        count = class_counts[cls_id]
+        pct = 100.0 * count / total if total else 0
+        report_lines.append(f"    {label:<22s}  {count:>7,d}  ({pct:5.1f}%)")
+    report_lines.append("-" * 60)
+
+    # Per-cell top damaged
+    cell_damage = Counter()
+    cell_destroyed = Counter()
+    for b in all_buildings:
+        if b["m2b_class"] >= 2:  # major or destroyed
+            cell_damage[b["cell_id"]] += 1
+        if b["m2b_class"] == 3:
+            cell_destroyed[b["cell_id"]] += 1
+
+    if cell_damage:
+        report_lines.append("  Most damaged cells (major + destroyed):")
+        for cell_id, count in cell_damage.most_common(10):
+            n_dest = cell_destroyed.get(cell_id, 0)
+            report_lines.append(f"    {cell_id}:  {count} damaged  ({n_dest} destroyed)")
+    report_lines.append("=" * 60)
+
+    report_text = "\n".join(report_lines)
+    print(f"\n{report_text}")
+
+    # Write report to file
+    report_path = args.out_dir / "run_summary_report.txt"
+    with open(report_path, "w") as f:
+        f.write(report_text + "\n")
+    print(f"\n[done] Report saved to {report_path}")
 
 
 if __name__ == "__main__":

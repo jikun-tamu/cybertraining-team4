@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Multi-date inference experiment driver.
+"""Multi-date inference experiment driver for the canonical LA Fire 2025 run tree.
 
 Runs Stage-1 (once per cell), Stage-2a (once per cell), then Stage-2b for
 EVERY post date, and aggregates predictions across dates using three methods.
 
-Outputs go to --out_root (default: outputs/multidate_experiment/).
+Outputs go to `--out_root` under the canonical LA Fire root by default.
 Does NOT touch outputs/driver_runs/ (the single-date smoke test outputs).
 
 Pipeline per cell
@@ -24,7 +24,7 @@ Usage
       --cells cell_00064 cell_00065 cell_00072 cell_00073 cell_00074 \\
               cell_00045 cell_00046 cell_00080 \\
       --manifest data/processed/chips_600m_manifest.csv \\
-      --out_root outputs/multidate_experiment \\
+      --out_root /media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run \\
       --device cuda:0 \\
       --reuse_stage1_from outputs/driver_runs   # optional
 """
@@ -41,11 +41,13 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from la_fire_paths import canonical_manifest_path, canonical_run_root, rewrite_la_fire_path
+
 # ── Constants ─────────────────────────────────────────────────────────────────
 PKG_ROOT = Path(__file__).resolve().parents[1]
-
-OLD_CHIPS_PREFIX = "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m"
-NEW_CHIPS_PREFIX = str(PKG_ROOT.parent / "data/interim/chips_600m")
+PROJECT_ROOT = PKG_ROOT.parent
+STAGE1_PACKAGE_ROOT = PROJECT_ROOT / "stage1"
+STAGE1_ENV = Path("/media/gisense/xihan/geoai_sam")
 
 PYTHON = sys.executable  # same interpreter that runs this script
 
@@ -53,7 +55,7 @@ PYTHON = sys.executable  # same interpreter that runs this script
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def fix_path(p: str) -> Path:
-    return Path(p.replace(OLD_CHIPS_PREFIX, NEW_CHIPS_PREFIX))
+    return rewrite_la_fire_path(p)
 
 
 def load_manifest(manifest_path: Path) -> dict[str, dict]:
@@ -130,9 +132,12 @@ def run_stage1(
     cell_out: Path,
     device: str,
     reuse_from: Path | None,
-    use_stage1_package: bool = False,
 ) -> tuple[Path, str] | None:
-    """Run (or reuse) Stage 1. Returns (stage1_dir, tile_id) or None on failure."""
+    """Run (or reuse) Stage 1 via sam3_building_identifier package.
+
+    Uses 512px tiling with 64px overlap for best recall on 1966×1966 chips.
+    Returns (stage1_dir, tile_id) or None on failure.
+    """
     stage1_dir = cell_out / "stage1"
     pair_dir = cell_out / "pair_inputs"
     pair_dir.mkdir(parents=True, exist_ok=True)
@@ -145,53 +150,34 @@ def run_stage1(
 
     # Try to reuse existing Stage-1 output
     if reuse_from is not None:
-        # Look for outputs/driver_runs/la_fire_{cell_id}/stage1/labels/*.json
         candidate = reuse_from / f"la_fire_{cell_id}" / "stage1"
         label_files = list((candidate / "labels").glob("*_prediction.json")) if candidate.exists() else []
         if label_files:
             print(f"  [stage1] reusing {candidate}")
             stage1_dir.mkdir(parents=True, exist_ok=True)
-            # Symlink/copy the labels dir
             labels_dst = stage1_dir / "labels"
             if not labels_dst.exists():
                 shutil.copytree(candidate / "labels", labels_dst)
             return stage1_dir, tile_id
 
-    # Run Stage 1 fresh
+    # Run Stage 1 fresh via sam3_building_identifier package
     env = {**os.environ, "HF_HUB_OFFLINE": "1"}
-    if use_stage1_package:
-        rc = run(
-            [PYTHON, "-m", "sam3_building_identifier",
-             "--input-dir", pair_dir,
-             "--output-dir", stage1_dir,
-             "--max-images", "1",
-             "--prompt", "building",
-             "--min-size", "30",
-             "--batch-size", "1",
-             "--device", device,
-             "--disaster-type", "pre"],
-            cwd=PKG_ROOT, env=env,
-            label=f"stage1 {cell_id}",
-        )
-    else:
-        stage1_script = PKG_ROOT / "stage1/SAM3_Final_20260226/scripts/run_sam3_building_infer.py"
-        rc = run(
-            [PYTHON, stage1_script,
-             "--input", pair_dir,
-             "--output", stage1_dir,
-             "--pattern", pre_link_name,
-             "--max-images", "1",
-             "--prompt", "building",
-             "--min-size", "30",
-             "--output-style", "notebook",
-             "--batch-size", "1",
-             "--device", device,
-             "--backend", "meta",
-             "--tile-size", "512",
-             "--overlap", "64"],
-            cwd=PKG_ROOT, env=env,
-            label=f"stage1 {cell_id}",
-        )
+    rc = run(
+        ["conda", "run", "-p", STAGE1_ENV, "python", "-m", "sam3_building_identifier",
+         "--input-dir", pair_dir,
+         "--output-dir", stage1_dir,
+         "--max-images", "1",
+         "--prompt", "building",
+         "--min-size", "30",
+         "--tile-size", "512",
+         "--overlap", "64",
+         "--batch-size", "1",
+         "--device", device,
+         "--no-annotations",
+         "--disaster-type", "pre"],
+        cwd=STAGE1_PACKAGE_ROOT, env=env,
+        label=f"stage1 {cell_id}",
+    )
     if rc != 0:
         return None
     return stage1_dir, tile_id
@@ -462,16 +448,21 @@ def summarize_cell(cell_id: str, cell_out: Path, all_dates: list[str]) -> dict:
 
 def parse_args():
     p = argparse.ArgumentParser(description="Multi-date inference experiment.")
-    p.add_argument("--cells", nargs="+", required=True, help="Cell IDs to process.")
+    p.add_argument("--cells", nargs="*", default=None,
+                   help="Cell IDs to process. Omit or pass 'all' to run all cells in the manifest.")
     p.add_argument("--manifest", type=Path,
-                   default=PKG_ROOT.parent / "data/processed/chips_600m_manifest.csv")
+                   default=canonical_manifest_path())
     p.add_argument("--out_root", type=Path,
-                   default=PKG_ROOT / "outputs/multidate_experiment")
+                   default=canonical_run_root())
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--reuse_stage1_from", type=Path, default=None,
                    help="Look here for existing la_fire_{cell_id}/stage1/ outputs to reuse.")
-    p.add_argument("--use_stage1_package", action="store_true",
-                   help="Use stage1/sam3_building_identifier package instead of SAM3_Final script.")
+    p.add_argument(
+        "--stop_after",
+        choices=["stage1", "shared_base", "stage2a", "full"],
+        default="full",
+        help="Stop early for validation runs. 'shared_base' runs Stage 1 plus shared_base only.",
+    )
     p.add_argument(
         "--workflow",
         choices=["training", "realworld"],
@@ -500,6 +491,13 @@ def main():
 
     manifest = load_manifest(args.manifest)
     print(f"Loaded manifest: {len(manifest)} cells total")
+
+    # Resolve cell list: None, empty, or ["all"] → all cells in manifest
+    if not args.cells or args.cells == ["all"]:
+        args.cells = sorted(manifest.keys())
+        print(f"Running ALL {len(args.cells)} cells")
+    else:
+        print(f"Running {len(args.cells)} selected cells")
 
     cell_summaries = []
     failed_cells = []
@@ -532,7 +530,6 @@ def main():
         # ── Step 1: Stage 1 ──────────────────────────────────────────────────
         result = run_stage1(
             cell_id, pre_image, cell_out, args.device, args.reuse_stage1_from,
-            use_stage1_package=args.use_stage1_package,
         )
         if result is None:
             print(f"[FAIL] {cell_id}: Stage 1 failed")
@@ -548,6 +545,15 @@ def main():
             print(f"  [stage1] instances={n_inst}")
             if n_inst == 0:
                 print(f"  [stage1] WARNING: 0 instances detected — continuing anyway")
+
+        if args.stop_after == "stage1":
+            cell_summaries.append({
+                "cell_id": cell_id,
+                "n_instances_stage1": n_inst if label_files else 0,
+                "stop_after": "stage1",
+            })
+            print(f"  [stop] {cell_id}: stop_after=stage1")
+            continue
 
         pair_dir = cell_out / "pair_inputs"
 
@@ -580,10 +586,37 @@ def main():
             })
             continue
 
+        if args.stop_after == "shared_base":
+            shared_rows = 0
+            with open(shared_csv, newline="") as f:
+                shared_rows = sum(1 for _ in csv.DictReader(f))
+            cell_summaries.append({
+                "cell_id": cell_id,
+                "n_instances_stage1": n_inst if label_files else 0,
+                "n_shared_base_rows": shared_rows,
+                "stop_after": "shared_base",
+            })
+            print(f"  [stop] {cell_id}: stop_after=shared_base shared_rows={shared_rows}")
+            continue
+
         # ── Step 3: Stage 2a ─────────────────────────────────────────────────
         stage2a_csv = run_stage2a(cell_id, shared_csv, cell_out, args.device)
         if stage2a_csv is None:
             print(f"  [WARN] {cell_id}: Stage 2a failed — continuing with dates")
+
+        if args.stop_after == "stage2a":
+            stage2a_rows = 0
+            if stage2a_csv is not None and stage2a_csv.exists():
+                with open(stage2a_csv, newline="") as f:
+                    stage2a_rows = sum(1 for _ in csv.DictReader(f))
+            cell_summaries.append({
+                "cell_id": cell_id,
+                "n_instances_stage1": n_inst if label_files else 0,
+                "n_stage2a_rows": stage2a_rows,
+                "stop_after": "stage2a",
+            })
+            print(f"  [stop] {cell_id}: stop_after=stage2a stage2a_rows={stage2a_rows}")
+            continue
 
         # ── Step 4: Per-date Stage 2b ─────────────────────────────────────────
         if args.workflow == "training":

@@ -32,11 +32,13 @@ from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.collections import PatchCollection
 from matplotlib.patheffects import withStroke
 
+from la_fire_paths import canonical_chips_root, canonical_la_fire_root, canonical_run_root
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
-LA_FIRE_ROOT   = Path("/media/data/building_instance_tamu/la_fire_2025")
-CHIPS_ROOT     = LA_FIRE_ROOT / "chips"
+LA_FIRE_ROOT   = canonical_la_fire_root()
+CHIPS_ROOT     = canonical_chips_root()
 GEOJSON        = LA_FIRE_ROOT / "final_maps/maps/building_damage.geojson"
-RUN_ROOT       = LA_FIRE_ROOT / "stage2_damage/multidate_full_run"
+RUN_ROOT       = canonical_run_root()
 OUT_DIR        = LA_FIRE_ROOT / "overlays_v2"
 
 # Longitude threshold separating west (Pacific Palisades) from east (Altadena)

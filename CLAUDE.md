@@ -58,7 +58,10 @@ conda run -n geoai_sam python stage1/tests/smoke_test.py
 | Parameter | Default | Notes |
 |-----------|---------|-------|
 | `--prompt` | `"building"` | Text prompt for SAM3 |
+| `--tile-size` | `512` | Tile size; SAM3 resizes to 1024 internally, so tiling preserves detail. 0 to disable |
+| `--overlap` | `64` | Overlap between adjacent tiles |
 | `--min-size` | `100` | Min mask area in pixels |
+| `--min-polygon-area` | `100.0` | Filters tile-boundary stitching artifacts |
 | `--epsilon` | `2.0` | Douglas-Peucker polygon approx |
 | `--batch-size` | `1` | Keep at 1 for A6000 |
 | `--disaster-type` | `auto` | Filters images by filename suffix |
@@ -66,12 +69,13 @@ conda run -n geoai_sam python stage1/tests/smoke_test.py
 ## Package Architecture (`sam3_building_identifier/`)
 
 ```
-config.py         — PipelineConfig dataclass (all tuneable params + computed dirs)
-model.py          — SAM3Model: lazy-loads SamGeo3, wraps single/batch inference
-pipeline.py       — run_pipeline(): batch loop, JSON output, run_summary.json
+config.py          — PipelineConfig dataclass (all tuneable params + computed dirs)
+model.py           — SAM3Model: lazy-loads SamGeo3, wraps single/batch inference
+pipeline.py        — run_pipeline(): batch loop with tiling support, JSON output, run_summary.json
+tiling.py          — generate_tiles(), stitch_masks() for tile-based inference
 mask_to_polygon.py — masks_to_instances(): geoai.orthogonalize() → cv2 fallback
-utils.py          — discover_images(), timer() context manager, log()
-__main__.py       — argparse CLI → PipelineConfig → run_pipeline()
+utils.py           — discover_images(), timer() context manager, log()
+__main__.py        — argparse CLI → PipelineConfig → run_pipeline()
 ```
 
 **Critical SamGeo3 API behavior**:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Combine per-cell multidate results into a single georeferenced dataset.
+"""Combine per-cell canonical LA Fire multidate results into a single georeferenced dataset.
 
 For each processed cell:
   1. Reads aggregated_predictions.jsonl (M1 damage class + probs)
@@ -11,9 +11,9 @@ For each processed cell:
 
 Outputs
 -------
-  outputs/multidate_full_run/building_damage_all_cells.csv   — flat CSV
-  outputs/maps/building_damage.geojson                       — WGS84 GeoJSON
-  outputs/maps/building_damage.gpkg                          — UTM GeoPackage
+  /media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run/building_damage_all_cells.csv
+  /media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run/building_damage_all_cells.geojson
+  /media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run/building_damage_all_cells.gpkg
 """
 
 from __future__ import annotations
@@ -26,26 +26,97 @@ from pathlib import Path
 
 import numpy as np
 
+from la_fire_paths import canonical_manifest_path, canonical_run_root, rewrite_la_fire_path
+
 PKG_ROOT = Path(__file__).resolve().parents[1]
-OLD_PREFIX = "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m"
-NEW_PREFIX = "/media/data/building_instance_tamu/la_fire_2025/chips"
 
 
 def fix_path(p: str) -> str:
-    return p.replace(OLD_PREFIX, NEW_PREFIX)
+    return str(rewrite_la_fire_path(p))
 
 
 # ── Geometry helpers ──────────────────────────────────────────────────────────
 
-def parse_wkt_polygon(wkt: str) -> list[tuple[float, float]] | None:
-    """Parse POLYGON ((x y, ...)) → list of (x, y) pairs."""
+def _parse_ring_text(text: str) -> list[tuple[float, float]] | None:
     import re
-    if not wkt or not wkt.strip().upper().startswith("POLYGON"):
+    pts = []
+    for chunk in text.split(","):
+        nums = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", chunk)]
+        if len(nums) >= 2:
+            pts.append((nums[0], nums[1]))
+    if len(pts) >= 2 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    return pts or None
+
+
+def _extract_wkt_rings(wkt: str, geom_type: str) -> list[list[tuple[float, float]] | None]:
+    body = wkt.strip()[len(geom_type):].strip()
+    if not (body.startswith("(") and body.endswith(")")):
+        return []
+    groups = []
+    start = None
+    depth = 0
+    for idx, ch in enumerate(body):
+        if ch == "(":
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0 and start is not None:
+                groups.append(body[start:idx + 1])
+                start = None
+    if geom_type == "POLYGON":
+        return [_parse_ring_text(groups[0][1:-1])] if groups else []
+    rings = []
+    for poly_group in groups:
+        inner = poly_group[1:-1].strip()
+        sub_groups = []
+        start = None
+        depth = 0
+        for idx, ch in enumerate(inner):
+            if ch == "(":
+                if depth == 0:
+                    start = idx
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0 and start is not None:
+                    sub_groups.append(inner[start:idx + 1])
+                    start = None
+        if sub_groups:
+            rings.append(_parse_ring_text(sub_groups[0][1:-1]))
+    return rings
+
+
+def parse_wkt_geometry(wkt: str) -> list[list[tuple[float, float]]] | None:
+    if not wkt:
         return None
-    nums = [float(x) for x in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", wkt)]
-    if len(nums) < 6 or len(nums) % 2 != 0:
+    try:
+        from shapely import wkt as shapely_wkt  # type: ignore
+
+        geom = shapely_wkt.loads(wkt)
+        if geom.geom_type == "Polygon":
+            coords = list(geom.exterior.coords[:-1])
+            return [coords] if len(coords) >= 3 else None
+        if geom.geom_type == "MultiPolygon":
+            polys = []
+            for poly in geom.geoms:
+                coords = list(poly.exterior.coords[:-1])
+                if len(coords) >= 3:
+                    polys.append(coords)
+            return polys or None
+    except Exception:
+        pass
+    upper = wkt.strip().upper()
+    if upper.startswith("POLYGON"):
+        rings = _extract_wkt_rings(wkt, "POLYGON")
+    elif upper.startswith("MULTIPOLYGON"):
+        rings = _extract_wkt_rings(wkt, "MULTIPOLYGON")
+    else:
         return None
-    return [(nums[i], nums[i + 1]) for i in range(0, len(nums), 2)]
+    valid = [ring for ring in rings if ring and len(ring) >= 3]
+    return valid or None
 
 
 def pixel_to_utm(pts_px: list[tuple[float, float]], transform) -> list[tuple[float, float]]:
@@ -62,11 +133,11 @@ def utm_to_wgs84(pts_utm: list[tuple[float, float]], epsg: int = 32611):
     return [t.transform(x, y) for x, y in pts_utm]
 
 
-def pts_to_geojson_polygon(pts_wgs84: list[tuple[float, float]]) -> dict:
+def pts_to_geojson_polygon(pts_wgs84: list[tuple[float, float]]) -> list[list[float]]:
     coords = [[lon, lat] for lon, lat in pts_wgs84]
     if coords[0] != coords[-1]:
         coords.append(coords[0])
-    return {"type": "Polygon", "coordinates": [coords]}
+    return coords
 
 
 def pts_to_wkt_utm(pts_utm: list[tuple[float, float]]) -> str:
@@ -76,6 +147,25 @@ def pts_to_wkt_utm(pts_utm: list[tuple[float, float]]) -> str:
         x0, y0 = pts_utm[0]
         inner += f", {x0:.3f} {y0:.3f}"
     return f"POLYGON (({inner}))"
+
+
+def geometry_to_geojson(geoms_wgs84: list[list[tuple[float, float]]]) -> dict:
+    polygons = [[pts_to_geojson_polygon(poly)] for poly in geoms_wgs84]
+    if len(polygons) == 1:
+        return {"type": "Polygon", "coordinates": polygons[0]}
+    return {"type": "MultiPolygon", "coordinates": polygons}
+
+
+def geometry_to_wkt_utm(geoms_utm: list[list[tuple[float, float]]]) -> str:
+    if len(geoms_utm) == 1:
+        return pts_to_wkt_utm(geoms_utm[0])
+    parts = []
+    for pts in geoms_utm:
+        coords = list(pts)
+        if coords[0] != coords[-1]:
+            coords.append(coords[0])
+        parts.append("((" + ", ".join(f"{x:.3f} {y:.3f}" for x, y in coords) + "))")
+    return "MULTIPOLYGON (" + ", ".join(parts) + ")"
 
 
 # ── Data loading helpers ──────────────────────────────────────────────────────
@@ -142,15 +232,15 @@ DAMAGE_LABEL = {-1: "unknown", 0: "no_damage", 1: "minor", 2: "major", 3: "destr
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--run_root", type=Path,
-                   default=PKG_ROOT / "outputs/multidate_full_run")
+                   default=canonical_run_root())
     p.add_argument("--out_csv", type=Path,
-                   default=PKG_ROOT / "outputs/multidate_full_run/building_damage_all_cells.csv")
+                   default=canonical_run_root() / "building_damage_all_cells.csv")
     p.add_argument("--out_geojson", type=Path,
-                   default=PKG_ROOT / "outputs/maps/building_damage.geojson")
+                   default=canonical_run_root() / "building_damage_all_cells.geojson")
     p.add_argument("--out_gpkg", type=Path,
-                   default=PKG_ROOT / "outputs/maps/building_damage.gpkg")
+                   default=canonical_run_root() / "building_damage_all_cells.gpkg")
     p.add_argument("--manifest", type=Path,
-                   default=PKG_ROOT.parent / "data/processed/chips_600m_manifest.csv")
+                   default=canonical_manifest_path())
     args = p.parse_args()
 
     args.out_csv.parent.mkdir(parents=True, exist_ok=True)
@@ -213,29 +303,30 @@ def main():
 
             # Parse pixel polygon
             wkt_px = shared_row.get("polygon_wkt_xy_pre", "")
-            pts_px = parse_wkt_polygon(wkt_px)
+            geoms_px = parse_wkt_geometry(wkt_px)
 
             polygon_wkt_utm = ""
             centroid_utm_x = centroid_utm_y = centroid_lon = centroid_lat = ""
             geom_wgs84 = None
 
-            if pts_px and transform and epsg:
+            if geoms_px and transform and epsg:
                 try:
-                    pts_utm = pixel_to_utm(pts_px, transform)
-                    polygon_wkt_utm = pts_to_wkt_utm(pts_utm)
-                    cx_utm = np.mean([p[0] for p in pts_utm])
-                    cy_utm = np.mean([p[1] for p in pts_utm])
+                    geoms_utm = [pixel_to_utm(poly, transform) for poly in geoms_px]
+                    polygon_wkt_utm = geometry_to_wkt_utm(geoms_utm)
+                    all_utm_pts = [pt for poly in geoms_utm for pt in poly]
+                    cx_utm = np.mean([p[0] for p in all_utm_pts])
+                    cy_utm = np.mean([p[1] for p in all_utm_pts])
                     centroid_utm_x = round(cx_utm, 2)
                     centroid_utm_y = round(cy_utm, 2)
-                    pts_wgs84 = utm_to_wgs84(pts_utm, epsg)
-                    geom_wgs84 = pts_to_geojson_polygon(pts_wgs84)
+                    geoms_wgs84 = [utm_to_wgs84(poly, epsg) for poly in geoms_utm]
+                    geom_wgs84 = geometry_to_geojson(geoms_wgs84)
                     clon, clat = utm_to_wgs84([(cx_utm, cy_utm)], epsg)[0]
                     centroid_lon = round(clon, 7)
                     centroid_lat = round(clat, 7)
                 except Exception as e:
                     n_skipped_geo += 1
                     geom_wgs84 = None
-            elif not pts_px:
+            elif not geoms_px:
                 n_skipped_geo += 1
 
             # M1 probs

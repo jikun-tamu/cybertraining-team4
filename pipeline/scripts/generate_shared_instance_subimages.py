@@ -54,17 +54,33 @@ def parse_args():
     return p.parse_args()
 
 
-def parse_wkt_polygon_xy(wkt):
+def parse_wkt_geometries_xy(wkt):
     if not wkt or not isinstance(wkt, str):
         return None
+    try:
+        from shapely import wkt as shapely_wkt  # type: ignore
+
+        geom = shapely_wkt.loads(wkt)
+        if geom.geom_type == "Polygon":
+            arr = np.array(geom.exterior.coords[:-1], dtype=np.float32)
+            return [arr] if len(arr) >= 3 else None
+        if geom.geom_type == "MultiPolygon":
+            polys = []
+            for poly in geom.geoms:
+                arr = np.array(poly.exterior.coords[:-1], dtype=np.float32)
+                if len(arr) >= 3:
+                    polys.append(arr)
+            return polys or None
+    except Exception:
+        pass
     wkt = wkt.strip()
     upper = wkt.upper()
     if upper.startswith("POLYGON"):
         rings = _extract_wkt_rings(wkt, "POLYGON")
-        return _largest_valid_ring(rings)
+        return [ring for ring in rings if ring is not None and len(ring) >= 3] or None
     if upper.startswith("MULTIPOLYGON"):
         rings = _extract_wkt_rings(wkt, "MULTIPOLYGON")
-        return _largest_valid_ring(rings)
+        return [ring for ring in rings if ring is not None and len(ring) >= 3] or None
     return None
 
 
@@ -133,27 +149,29 @@ def _polygon_area_abs(pts):
     return 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
 
 
-def _largest_valid_ring(rings):
-    best = None
-    best_area = -1.0
-    for ring in rings:
-        if ring is None or len(ring) < 3:
-            continue
-        area = _polygon_area_abs(ring)
-        if area > best_area:
-            best = ring
-            best_area = area
-    return best
-
-
-def polygon_xy_to_wkt(pts):
+def _close_ring(pts):
     if pts is None or len(pts) < 3:
+        return pts
+    if np.allclose(pts[0], pts[-1]):
+        return pts
+    return np.vstack([pts, pts[0]])
+
+
+def geometry_xy_to_wkt(polys):
+    if polys is None:
         return ""
-    coords = [tuple(map(float, p)) for p in pts]
-    if coords[0] != coords[-1]:
-        coords.append(coords[0])
-    pts_text = ", ".join(f"{x} {y}" for x, y in coords)
-    return f"POLYGON (({pts_text}))"
+    valid = [poly for poly in polys if poly is not None and len(poly) >= 3]
+    if not valid:
+        return ""
+
+    def ring_text(pts):
+        coords = [tuple(map(float, p)) for p in _close_ring(pts)]
+        return ", ".join(f"{x} {y}" for x, y in coords)
+
+    if len(valid) == 1:
+        return f"POLYGON (({ring_text(valid[0])}))"
+    parts = ", ".join(f"(({ring_text(poly)}))" for poly in valid)
+    return f"MULTIPOLYGON ({parts})"
 
 
 def polygon_centroid(pts):
@@ -172,6 +190,29 @@ def polygon_centroid(pts):
     return float(cx), float(cy)
 
 
+def geometry_centroid(polys):
+    valid = [poly for poly in polys if poly is not None and len(poly) >= 3]
+    if not valid:
+        return 0.0, 0.0
+    total_area = 0.0
+    weighted_x = 0.0
+    weighted_y = 0.0
+    all_pts = []
+    for poly in valid:
+        closed = _close_ring(poly)
+        area = _polygon_area_abs(closed)
+        cx, cy = polygon_centroid(closed)
+        if area > 0:
+            weighted_x += cx * area
+            weighted_y += cy * area
+            total_area += area
+        all_pts.append(poly)
+    if total_area > 0:
+        return weighted_x / total_area, weighted_y / total_area
+    stack = np.vstack(all_pts)
+    return float(stack[:, 0].mean()), float(stack[:, 1].mean())
+
+
 def clamp_crop_window(cx, cy, crop_size, w, h):
     half = crop_size // 2
     x0 = int(round(cx)) - half
@@ -188,12 +229,26 @@ def local_polygon(pts_global, x0, y0):
     return pts
 
 
+def local_geometry(polys_global, x0, y0):
+    return [local_polygon(poly, x0, y0) for poly in polys_global if poly is not None and len(poly) >= 3]
+
+
 def draw_mask_polygon(size, pts_local):
     img = Image.new("L", (size, size), 0)
     draw = ImageDraw.Draw(img)
     xy = [tuple(map(float, p)) for p in pts_local]
     if len(xy) >= 3:
         draw.polygon(xy, fill=255)
+    return np.array(img, dtype=np.uint8)
+
+
+def draw_mask_geometry(size, polys_local):
+    img = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(img)
+    for pts_local in polys_local:
+        xy = [tuple(map(float, p)) for p in pts_local]
+        if len(xy) >= 3:
+            draw.polygon(xy, fill=255)
     return np.array(img, dtype=np.uint8)
 
 
@@ -284,11 +339,37 @@ def _polygon_coords_to_wkt(coords):
     """Convert [[x,y], ...] polygon to WKT string."""
     if not coords or len(coords) < 3:
         return ""
-    pts = " ".join(f"{x} {y}" for x, y in coords)
+    pts = ", ".join(f"{x} {y}" for x, y in coords)
     # Close ring if not already closed
     if coords[0] != coords[-1]:
-        pts += f" {coords[0][0]} {coords[0][1]}"
+        pts += f", {coords[0][0]} {coords[0][1]}"
     return f"POLYGON (({pts}))"
+
+
+def _coords_look_like_pixels(coords, width, height):
+    if not coords:
+        return False
+    xs = [float(pt[0]) for pt in coords]
+    ys = [float(pt[1]) for pt in coords]
+    return min(xs) >= -1 and min(ys) >= -1 and max(xs) <= float(width) + 1 and max(ys) <= float(height) + 1
+
+
+def _maybe_convert_stage1_package_coords_to_pixels(pre_path, coords, width, height):
+    """Convert stage1 package polygon coords to pixel space when they are map coordinates."""
+    if not coords or _coords_look_like_pixels(coords, width, height):
+        return coords
+    try:
+        import rasterio  # type: ignore
+
+        with rasterio.open(pre_path) as ds:
+            inv = ~ds.transform
+            pixel_coords = []
+            for x, y in coords:
+                col, row = inv * (float(x), float(y))
+                pixel_coords.append([round(col, 2), round(row, 2)])
+        return pixel_coords
+    except Exception:
+        return coords
 
 
 def _rows_from_stage1_package_json(args, label_files):
@@ -331,15 +412,21 @@ def _rows_from_stage1_package_json(args, label_files):
         instances = doc.get("instances", []) or []
         for inst in instances:
             polygon_coords = inst.get("polygon", [])
+            polygon_coords = _maybe_convert_stage1_package_coords_to_pixels(
+                pre_path,
+                polygon_coords,
+                width,
+                height,
+            )
             wkt = _polygon_coords_to_wkt(polygon_coords)
             if not wkt:
                 skipped["missing_wkt"] += 1
                 continue
-            poly = parse_wkt_polygon_xy(wkt)
-            if poly is None:
+            polys = parse_wkt_geometries_xy(wkt)
+            if polys is None:
                 skipped["bad_wkt"] += 1
                 continue
-            wkt = polygon_xy_to_wkt(poly)
+            wkt = geometry_xy_to_wkt(polys)
 
             uid = inst.get("uid") or f"sam3_{uuid.uuid4()}"
             rows.append(
@@ -414,11 +501,11 @@ def _rows_from_prediction_json(args, label_files):
             if not wkt:
                 skipped["missing_wkt"] += 1
                 continue
-            poly = parse_wkt_polygon_xy(wkt)
-            if poly is None:
+            polys = parse_wkt_geometries_xy(wkt)
+            if polys is None:
                 skipped["bad_wkt"] += 1
                 continue
-            wkt = polygon_xy_to_wkt(poly)
+            wkt = geometry_xy_to_wkt(polys)
 
             uid = props.get("uid") or f"sam3_{uuid.uuid4()}"
             rows.append(
@@ -617,8 +704,8 @@ def process_chunk(task):
                 stats["skipped_missing_images"] += 1
                 continue
 
-            poly = parse_wkt_polygon_xy(row.get("polygon_wkt_xy_pre", ""))
-            if poly is None:
+            polys = parse_wkt_geometries_xy(row.get("polygon_wkt_xy_pre", ""))
+            if polys is None:
                 continue
 
             try:
@@ -635,14 +722,13 @@ def process_chunk(task):
                 continue
 
             w, h = post_img.size
-            poly_for_centroid = np.vstack([poly, poly[0]]) if len(poly) >= 2 and not np.allclose(poly[0], poly[-1]) else poly
-            cx, cy = polygon_centroid(poly_for_centroid)
+            cx, cy = geometry_centroid(polys)
             x0, y0, x1, y1 = clamp_crop_window(cx, cy, cfg["crop_size"], w, h)
             pre_crop = pre_img.crop((x0, y0, x1, y1))
             post_crop = post_img.crop((x0, y0, x1, y1))
 
-            poly_local = local_polygon(poly, x0, y0)
-            m_mask_255 = draw_mask_polygon(cfg["crop_size"], poly_local)
+            polys_local = local_geometry(polys, x0, y0)
+            m_mask_255 = draw_mask_geometry(cfg["crop_size"], polys_local)
             m_mask = (m_mask_255 > 0).astype(np.uint8)
             dil = dilate_fn(m_mask, cfg["ring_radius_px"])
             r_mask = np.clip(dil - m_mask, 0, 1).astype(np.uint8)

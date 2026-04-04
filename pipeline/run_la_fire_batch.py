@@ -13,26 +13,22 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from scripts.la_fire_paths import (
+    canonical_chips_root,
+    canonical_la_fire_root,
+    canonical_manifest_path,
+    rewrite_la_fire_path,
+)
+
 REPO_ROOT  = Path(__file__).resolve().parents[1]
 PKG_ROOT   = Path(__file__).resolve().parent
-LA_FIRE_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025")
-MANIFEST   = LA_FIRE_ROOT / "grids/chips_600m_manifest.csv"
-CHIPS_ROOT = LA_FIRE_ROOT / "chips"
-
-# Stale base paths in manifest CSV → correct to new location
-OLD_PREFIXES = [
-    "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m",
-    "/media/gisense/xihan/250812_CyberTraining_Team4/data/interim/chips_600m",
-    str(REPO_ROOT / "data/interim/chips_600m"),
-]
-NEW_PREFIX = str(CHIPS_ROOT)
+LA_FIRE_ROOT = canonical_la_fire_root()
+MANIFEST   = canonical_manifest_path()
+CHIPS_ROOT = canonical_chips_root()
 
 
 def fix_path(p: str) -> Path:
-    for old in OLD_PREFIXES:
-        if old in p:
-            return Path(p.replace(old, NEW_PREFIX))
-    return Path(p)
+    return rewrite_la_fire_path(p)
 
 
 def load_pairs(manifest: Path) -> list[dict]:

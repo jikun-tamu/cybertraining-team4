@@ -61,13 +61,30 @@ class PipelineConfig:
     # Inference
     # ------------------------------------------------------------------
     text_prompt: str = "building"
-    """Text prompt passed to SamGeo3.generate_masks()."""
+    """Text prompt passed to SamGeo3.generate_masks().
+
+    Future: multi-prompt ensemble support is planned via a `prompts` field
+    (e.g., prompts=["building", "house"]) with score-based mask merging.
+    See results/prompt_experiment/ for initial findings:
+      - "building": 387 detections on cell_00365
+      - "house": 410 detections (+6% recall, best single prompt)
+      - ensemble(building+house): 419 detections (+2.2% over best single)
+    Current default "building" is kept for consistency with xView2 benchmarks.
+    """
 
     min_size: int = 100
     """Minimum mask area in pixels. Masks smaller than this are discarded."""
 
     max_size: Optional[int] = None
     """Maximum mask area in pixels. None → no upper limit."""
+
+    tile_size: Optional[int] = 512
+    """Tile size for splitting large images before inference.
+    SAM3 internally resizes to ~1024px, so large images lose detail.
+    512 with overlap=64 gives best recall. None → process full image."""
+
+    tile_overlap: int = 64
+    """Overlap in pixels between adjacent tiles (used when tile_size is set)."""
 
     # ------------------------------------------------------------------
     # Polygon / vectorization
@@ -76,8 +93,9 @@ class PipelineConfig:
     """Douglas-Peucker simplification tolerance (pixels) passed to
     geoai.orthogonalize().  Matches notebooks (epsilon=2)."""
 
-    min_polygon_area: float = 10.0
+    min_polygon_area: float = 100.0
     """Minimum polygon area (sq-pixels) to keep after vectorization.
+    Filters out tiny fragments from tile-boundary stitching artifacts.
     Passed to geoai.orthogonalize(min_area=...)."""
 
     simplify_tolerance: Optional[float] = None
