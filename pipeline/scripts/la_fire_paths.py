@@ -1,25 +1,53 @@
 #!/usr/bin/env python3
-"""Canonical path helpers for the LA Fire 2025 validation pipeline."""
+"""Canonical path helpers for the LA Fire 2025 validation pipeline.
+
+Portability
+-----------
+Set the ``LA_FIRE_ROOT`` environment variable to override the default data
+root on any machine:
+
+    export LA_FIRE_ROOT=/path/to/la_fire_2025
+    python scripts/run_multidate_experiment.py ...
+
+If unset, defaults to the original storage location on the lab machine.
+"""
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
-CANONICAL_LA_FIRE_ROOT = Path("/media/data/building_instance_tamu/la_fire_2025")
+# ---------------------------------------------------------------------------
+# Configurable root — override with LA_FIRE_ROOT env var
+# ---------------------------------------------------------------------------
+
+CANONICAL_LA_FIRE_ROOT = Path(
+    os.environ.get("LA_FIRE_ROOT", "/media/data/building_instance_tamu/la_fire_2025")
+)
 
 CANONICAL_CHIPS_ROOT = CANONICAL_LA_FIRE_ROOT / "chips"
 CANONICAL_MANIFEST = CANONICAL_LA_FIRE_ROOT / "grids/chips_600m_manifest.csv"
 CANONICAL_RUN_ROOT = CANONICAL_LA_FIRE_ROOT / "stage2_damage/multidate_full_run"
 CANONICAL_QC_ROOT = CANONICAL_LA_FIRE_ROOT / "qc_overlays_m2b"
 
-OLD_CHIPS_PREFIXES = [
+# ---------------------------------------------------------------------------
+# Legacy chip path prefixes in the manifest CSV
+# These exist because the manifest was generated with an older directory
+# layout.  rewrite_la_fire_path() remaps them to the current chips root.
+# ---------------------------------------------------------------------------
+
+_LEGACY_CHIPS_PREFIXES = [
     "/media/data/la_fire_2025/chips",
     "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m",
     "/media/gisense/xihan/250812_CyberTraining_Team4/data/interim/chips_600m",
     "/media/gisense/xihan/250812_tamu_cybertraining_team4/data/interim/chips_600m",
 ]
 
+
+# ---------------------------------------------------------------------------
+# Public accessors
+# ---------------------------------------------------------------------------
 
 def canonical_la_fire_root() -> Path:
     return CANONICAL_LA_FIRE_ROOT
@@ -42,11 +70,15 @@ def canonical_qc_root() -> Path:
 
 
 def rewrite_la_fire_path(path_like: str | Path) -> Path:
-    """Rewrite legacy chip paths to the canonical LA root."""
+    """Rewrite legacy chip paths found in the manifest CSV to the current chips root.
+
+    Only needed because the manifest CSV was generated with an older path layout.
+    Paths that already use the canonical root pass through unchanged.
+    """
     text = str(path_like)
-    for old in OLD_CHIPS_PREFIXES:
+    for old in _LEGACY_CHIPS_PREFIXES:
         if old in text:
-            text = text.replace(old, str(CANONICAL_CHIPS_ROOT))
+            return Path(text.replace(old, str(CANONICAL_CHIPS_ROOT), 1))
     return Path(text)
 
 

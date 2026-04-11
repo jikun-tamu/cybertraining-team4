@@ -18,11 +18,15 @@ class PipelineConfig:
     # ------------------------------------------------------------------
     # I/O
     # ------------------------------------------------------------------
-    input_dir: str = "/media/data/building_instance_tamu/test/images"
-    """Directory containing input images."""
+    input_dir: str = ""
+    """Directory containing input images.
+    Must be provided explicitly via --input-dir or set before calling run_pipeline().
+    No default — will raise an error if left empty."""
 
-    output_dir: str = "/media/data/building_instance_tamu/sam3_claude/test"
-    """Root output directory.  Sub-folders are created automatically."""
+    output_dir: str = ""
+    """Root output directory.  Sub-folders are created automatically.
+    Must be provided explicitly via --output-dir or set before calling run_pipeline().
+    No default — will raise an error if left empty."""
 
     # ------------------------------------------------------------------
     # Image filtering

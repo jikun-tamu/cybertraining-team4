@@ -3,22 +3,24 @@ CLI entrypoint.
 
 Usage examples
 --------------
-# Run on all pre-disaster images in default dir:
-    python -m sam3_building_identifier
-
-# Run on 5 images, send output to /tmp/test_out:
+# Run on 5 images:
     python -m sam3_building_identifier \\
-        --input-dir /media/data/building_instance_tamu/test/images \\
-        --output-dir /tmp/test_out \\
+        --input-dir /path/to/images \\
+        --output-dir /path/to/output \\
         --max-images 5
 
 # Post-disaster images, CUDA device 1:
     python -m sam3_building_identifier \\
+        --input-dir /path/to/images \\
+        --output-dir /path/to/output \\
         --disaster-type post \\
         --device cuda:1
 
 # Dry-run: discover images but do NOT run inference:
-    python -m sam3_building_identifier --dry-run --max-images 10
+    python -m sam3_building_identifier \\
+        --input-dir /path/to/images \\
+        --output-dir /path/to/output \\
+        --dry-run
 
 Full list of options:  python -m sam3_building_identifier --help
 """

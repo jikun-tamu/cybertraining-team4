@@ -79,8 +79,8 @@ The project is structured as a pipeline from data ingestion to final analysis.
 
 ### 4. Exploration and Analysis
 - The `notebooks/` directory contains Jupyter notebooks for exploratory data analysis (EDA), visualization, and validation of results. Key notebooks include:
-  - `notebooks/stage1.ipynb`
-  - `notebooks/validation_case.ipynb`
+  - `notebooks/xview2_eda_unet.ipynb` — xView2 EDA and UNet training prototype
+  - `notebooks/validation_case.ipynb` — LA fire AOI setup, grid creation, Maxar download
 
 ---
 

@@ -47,7 +47,10 @@ from la_fire_paths import canonical_manifest_path, canonical_run_root, rewrite_l
 PKG_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = PKG_ROOT.parent
 STAGE1_PACKAGE_ROOT = PROJECT_ROOT / "stage1"
-STAGE1_ENV = Path("/media/gisense/xihan/geoai_sam")
+
+# Conda environment name for Stage 1 (sam3_building_identifier).
+# Override with GEOAI_SAM_ENV env var if the environment has a different name.
+STAGE1_ENV_NAME = os.environ.get("GEOAI_SAM_ENV", "geoai_sam")
 
 PYTHON = sys.executable  # same interpreter that runs this script
 
@@ -163,7 +166,7 @@ def run_stage1(
     # Run Stage 1 fresh via sam3_building_identifier package
     env = {**os.environ, "HF_HUB_OFFLINE": "1"}
     rc = run(
-        ["conda", "run", "-p", STAGE1_ENV, "python", "-m", "sam3_building_identifier",
+        ["conda", "run", "-n", STAGE1_ENV_NAME, "python", "-m", "sam3_building_identifier",
          "--input-dir", pair_dir,
          "--output-dir", stage1_dir,
          "--max-images", "1",
