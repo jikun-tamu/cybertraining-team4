@@ -106,6 +106,9 @@ test/
 !evaluation/results/**/*.json
 !evaluation/results/**/*.md
 
+# Collaborator repo (standalone git repo, lives here for convenience but must not be tracked)
+II_package/
+
 # pipeline (formerly II_package): large outputs and model weights
 II_package.zip
 pipeline/outputs/
