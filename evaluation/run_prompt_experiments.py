@@ -39,7 +39,7 @@ EXPT_ROOT  = DATA_ROOT / "sam3_prompt_experiments"
 OUT_DIR    = REPO_ROOT / "evaluation/results/prompt_experiments"
 
 # Baseline reuses existing full-test-set predictions
-BASELINE_PRED_DIR = DATA_ROOT / "sam3_claude/test/predictions"
+BASELINE_PRED_DIR = DATA_ROOT / "xview2_sam3_outputs/test/predictions"
 
 # ─── experiment definitions ────────────────────────────────────────────────────
 EXPERIMENTS = [

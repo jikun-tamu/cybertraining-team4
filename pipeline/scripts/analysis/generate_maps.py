@@ -27,9 +27,13 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 
+import sys
+# Allow importing shared modules (la_fire_paths) from scripts/ root
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from la_fire_paths import canonical_run_root, canonical_la_fire_root
 
-PKG_ROOT = Path(__file__).resolve().parents[1]
+PKG_ROOT = Path(__file__).resolve().parents[2]
 
 # Damage class styling
 DAMAGE_COLORS = {
@@ -182,7 +186,7 @@ def map_building_damage(features: list[dict], out_path: Path,
     for feat in feats:
         try:
             pts = geojson_polygon_to_pts(feat["geometry"])
-            cls = safe_int(feat["properties"].get("m1b_damage_class", -1))
+            cls = safe_int(feat["properties"].get("m2b_damage_class", -1))
             color = DAMAGE_COLORS.get(cls, DAMAGE_COLORS[-1])
             xs, ys = zip(*pts)
             ax.fill(xs, ys, color=color, alpha=0.80, linewidth=0)
@@ -213,7 +217,7 @@ def map_damage_density(features: list[dict], out_path: Path,
         lat = safe_float(props.get("centroid_lat"))
         if lon is None or lat is None:
             continue
-        cls = safe_int(props.get("m1b_damage_class", -1))
+        cls = safe_int(props.get("m2b_damage_class", -1))
         if cls in (2, 3):
             lons_dmg.append(lon); lats_dmg.append(lat)
         else:
@@ -258,7 +262,7 @@ def map_per_cell_damage_pct(features: list[dict], out_path: Path,
         lat = safe_float(props.get("centroid_lat"))
         if not cid or lon is None or lat is None:
             continue
-        cls = safe_int(props.get("m1b_damage_class", -1))
+        cls = safe_int(props.get("m2b_damage_class", -1))
         cell_stats[cid]["total"] += 1
         if cls in (2, 3):
             cell_stats[cid]["damaged"] += 1
@@ -360,7 +364,7 @@ def map_highlighted_areas(features: list[dict], out_path: Path,
         lat = safe_float(props.get("centroid_lat"))
         if not cid or lon is None or lat is None:
             continue
-        cls = safe_int(props.get("m1b_damage_class", -1))
+        cls = safe_int(props.get("m2b_damage_class", -1))
         unstable = is_unstable_flag(props.get("is_unstable", False))
         cells[cid]["total"] += 1
         if cls == 3:
@@ -424,7 +428,7 @@ def write_summary_report(features: list[dict], highlighted: list,
                           out_path: Path, run_root: Path):
     rows = [f["properties"] for f in features]
     n_total = len(rows)
-    damage_counts = Counter(safe_int(r.get("m1b_damage_class", -1)) for r in rows)
+    damage_counts = Counter(safe_int(r.get("m2b_damage_class", -1)) for r in rows)
     n_unstable = sum(1 for r in rows if is_unstable_flag(r.get("is_unstable", False)))
     n_cells = len(set(r.get("cell_id") for r in rows))
 

@@ -30,11 +30,11 @@ DATA_ROOT = Path("/media/data/building_instance_tamu")
 
 SPLITS = {
     "test": {
-        "pred_dir":  DATA_ROOT / "sam3_claude/test/predictions",
+        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs/test/predictions",
         "label_dir": DATA_ROOT / "test/labels",
     },
     "train": {
-        "pred_dir":  DATA_ROOT / "sam3_claude/train/predictions",
+        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs/train/predictions",
         "label_dir": DATA_ROOT / "train/labels",
     },
 }

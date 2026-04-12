@@ -221,7 +221,7 @@ def run_shared_base(
     post_link = pair_dir / post_link_name
     symlink_force(earliest_post, post_link)
 
-    script = PKG_ROOT / "scripts/generate_shared_instance_subimages.py"
+    script = PKG_ROOT / "scripts/infer/generate_shared_instance_subimages.py"
     rc = run(
         [PYTHON, script,
          "--stage1_labels_dir", labels_dir,
@@ -251,7 +251,7 @@ def run_stage2a(cell_id: str, shared_csv: Path, cell_out: Path, device: str) -> 
         return stage2a_csv
 
     infer_csv = cell_out / "stage2a_infer_input.csv"
-    build_script = PKG_ROOT / "scripts/build_stage2a_infer_csv.py"
+    build_script = PKG_ROOT / "scripts/infer/build_stage2a_infer_csv.py"
     rc = run(
         [PYTHON, build_script,
          "--shared_csv", shared_csv,
@@ -263,7 +263,7 @@ def run_stage2a(cell_id: str, shared_csv: Path, cell_out: Path, device: str) -> 
     if rc != 0:
         return None
 
-    infer_script = PKG_ROOT / "scripts/infer_stage2a.py"
+    infer_script = PKG_ROOT / "scripts/infer/infer_stage2a.py"
     rc = run(
         [PYTHON, infer_script,
          "--input_csv", infer_csv,
@@ -296,7 +296,7 @@ def run_date(
         return True
 
     # ── Generate post crops ──────────────────────────────────────────────────
-    crop_script = PKG_ROOT / "scripts/generate_post_crops_for_date.py"
+    crop_script = PKG_ROOT / "scripts/infer/generate_post_crops_for_date.py"
     rc = run(
         [PYTHON, crop_script,
          "--base_shared_csv", shared_csv,
@@ -334,7 +334,7 @@ def run_date(
         return False
 
     # ── Stage 2b ensemble inference ──────────────────────────────────────────
-    infer_script = PKG_ROOT / "scripts/infer_stage2_ensemble.py"
+    infer_script = PKG_ROOT / "scripts/infer/infer_stage2_ensemble.py"
     rc = run(
         [PYTHON, infer_script,
          "--csv", shared_for_date,
@@ -369,7 +369,7 @@ def run_date(
 # ── Aggregation ───────────────────────────────────────────────────────────────
 
 def run_aggregation(cell_id: str, cell_out: Path) -> bool:
-    agg_script = PKG_ROOT / "scripts/aggregate_multidate_predictions.py"
+    agg_script = PKG_ROOT / "scripts/infer/aggregate_multidate_predictions.py"
     out_jsonl = cell_out / "aggregated_predictions.jsonl"
     out_csv = cell_out / "aggregated_predictions.csv"
     rc = run(

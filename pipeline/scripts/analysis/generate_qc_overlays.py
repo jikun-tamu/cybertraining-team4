@@ -28,6 +28,9 @@ import matplotlib.patheffects as patheffects
 from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.collections import PatchCollection
 
+# Allow importing shared modules (la_fire_paths) from scripts/ root
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from la_fire_paths import canonical_chips_root, canonical_la_fire_root, canonical_run_root
 
 # ── Paths ────────────────────────────────────────────────────────────────────

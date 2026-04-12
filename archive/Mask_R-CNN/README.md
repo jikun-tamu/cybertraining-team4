@@ -44,7 +44,7 @@ buildings_instance/                   ← training dataset (auto-generated from 
 
 Open `notebooks/251209_train_instance_segmentation_model_xihan.ipynb`.
 
-Training data is at `/media/data/building_instance_tamu/Mask_R-CNN_BuildingInstance_Train/`
+Training data is at `/media/data/building_instance_tamu/archive/Mask_R-CNN_BuildingInstance_Train/`
 (absolute path, pre-existing on the machine).
 
 ## Quick inference (no retraining)

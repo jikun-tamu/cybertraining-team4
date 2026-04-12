@@ -29,8 +29,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-# Allow importing quality_filter from the same scripts/ directory
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Allow importing shared modules (quality_filter, la_fire_paths) from scripts/ root
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from quality_filter import assess_tile_quality, assess_crop_quality
 
 

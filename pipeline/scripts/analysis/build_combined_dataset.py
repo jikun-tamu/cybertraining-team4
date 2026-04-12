@@ -26,6 +26,11 @@ from pathlib import Path
 
 import numpy as np
 
+# Allow importing shared modules (la_fire_paths) from scripts/ root
+import sys
+from pathlib import Path as _Path
+sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+
 from la_fire_paths import canonical_manifest_path, canonical_run_root, rewrite_la_fire_path
 
 PKG_ROOT = Path(__file__).resolve().parents[1]

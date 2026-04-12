@@ -37,7 +37,7 @@ def parse_args():
     p.add_argument("--stage1_batch_size", type=int, default=1, help="Stage1 inference batch size")
 
     # Shared artifact args
-    p.add_argument("--shared_script", type=Path, default=Path("scripts/generate_shared_instance_subimages.py"))
+    p.add_argument("--shared_script", type=Path, default=Path("scripts/infer/generate_shared_instance_subimages.py"))
     p.add_argument("--crop_size", type=int, default=256)
     p.add_argument("--ring_radius_px", type=int, default=48)
     p.add_argument("--shared_num_workers", type=int, default=4)
@@ -45,8 +45,8 @@ def parse_args():
     p.add_argument("--shared_log_every", type=int, default=50)
 
     # Stage-2a args
-    p.add_argument("--stage2a_build_csv_script", type=Path, default=Path("scripts/build_stage2a_infer_csv.py"))
-    p.add_argument("--stage2a_infer_script", type=Path, default=Path("scripts/infer_stage2a.py"))
+    p.add_argument("--stage2a_build_csv_script", type=Path, default=Path("scripts/infer/build_stage2a_infer_csv.py"))
+    p.add_argument("--stage2a_infer_script", type=Path, default=Path("scripts/infer/infer_stage2a.py"))
     p.add_argument(
         "--stage2a_ckpt",
         type=Path,
@@ -58,7 +58,7 @@ def parse_args():
     p.add_argument("--stage2a_device", type=str, default="cuda")
 
     # Stage-2b args
-    p.add_argument("--stage2b_infer_script", type=Path, default=Path("scripts/infer_stage2_ensemble.py"))
+    p.add_argument("--stage2b_infer_script", type=Path, default=Path("scripts/infer/infer_stage2_ensemble.py"))
     p.add_argument(
         "--stage2b_ckpts",
         type=str,
@@ -97,10 +97,10 @@ def parse_args():
     p.add_argument("--stage2b_log_every_steps", type=int, default=10)
 
     # Presenter args
-    p.add_argument("--present_script", type=Path, default=Path("scripts/present_instance_results.py"))
+    p.add_argument("--present_script", type=Path, default=Path("scripts/analysis/present_instance_results.py"))
     p.add_argument("--top_k_uncertain", type=int, default=30)
     p.add_argument("--print_top_n", type=int, default=15)
-    p.add_argument("--visualize_script", type=Path, default=Path("scripts/visualize_stage2_overlays.py"))
+    p.add_argument("--visualize_script", type=Path, default=Path("scripts/analysis/visualize_stage2_overlays.py"))
     p.add_argument("--visualize_max_outputs", type=int, default=100)
     p.add_argument("--visualize_fill_opacity", type=float, default=0.5)
     p.add_argument("--visualize_gt_labels", type=str, default="", help="Optional gt label filter for visualization")

@@ -59,7 +59,7 @@ conda run -n geoai_sam python stage1/tests/smoke_test.py
 ```bash
 conda run -n geoai_sam python -m sam3_building_identifier \
     --input-dir /media/data/building_instance_tamu/test/images \
-    --output-dir /media/data/building_instance_tamu/sam3_claude/test
+    --output-dir /media/data/building_instance_tamu/xview2_sam3_outputs/test
 ```
 
 The pipeline skips images whose `_prediction.json` already exists
