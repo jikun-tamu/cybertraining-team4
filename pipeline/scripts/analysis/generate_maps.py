@@ -43,13 +43,13 @@ DAMAGE_COLORS = {
     3: "#e74c3c",   # destroyed — red
     -1: "#95a5a6",  # unknown — grey
 }
-DAMAGE_LABELS = {0: "No damage", 1: "Minor", 2: "Major", 3: "Destroyed", -1: "Unknown"}
+DAMAGE_LABELS = {0: "No damage", 1: "Minor", 2: "Major", 3: "Destroyed", -1: "Not identifiable"}
 
 # Data-driven bounding boxes (lon_min, lon_max, lat_min, lat_max)
 # West cluster: Malibu/coastal  data: lon -118.645–-118.542, lat 34.059–34.094
 BBOX_WEST = (-118.68, -118.50, 34.03, 34.11)
 # East cluster: Pasadena/Altadena  data: lon -118.144–-118.037, lat 34.162–34.225
-BBOX_EAST = (-118.17, -117.99, 34.14, 34.25)
+BBOX_EAST = (-118.155, -118.025, 34.155, 34.235)
 
 ZOOM_CONFIGS = [
     ("full",  None,      ""),
@@ -144,13 +144,13 @@ def figsize_for_bbox(bbox: tuple | None, features: list[dict] | None = None,
 def setup_fig(figsize=(16, 14)) -> tuple:
     fig, ax = plt.subplots(figsize=figsize)
     ax.set_aspect("auto")
-    ax.set_facecolor("#1a1a2e")
-    fig.patch.set_facecolor("#1a1a2e")
-    ax.tick_params(colors="white")
-    ax.xaxis.label.set_color("white")
-    ax.yaxis.label.set_color("white")
+    ax.set_facecolor("white")
+    fig.patch.set_facecolor("white")
+    ax.tick_params(colors="black")
+    ax.xaxis.label.set_color("black")
+    ax.yaxis.label.set_color("black")
     for spine in ax.spines.values():
-        spine.set_edgecolor("#555")
+        spine.set_edgecolor("#aaa")
     return fig, ax
 
 
@@ -162,10 +162,10 @@ def apply_bbox_limits(ax, bbox: tuple | None):
 
 def add_legend_damage(ax):
     patches = [mpatches.Patch(color=DAMAGE_COLORS[c], label=DAMAGE_LABELS[c])
-               for c in [0, 1, 2, 3]]
+               for c in [0, 1, 2, 3, -1]]
     ax.legend(handles=patches, loc="lower left", framealpha=0.85,
-              facecolor="#222", labelcolor="white", title="Damage Class",
-              title_fontsize=10, fontsize=9)
+              facecolor="white", labelcolor="black", title="Damage Class",
+              title_fontsize=10, fontsize=9, edgecolor="#aaa")
 
 
 def save_fig(fig, out_path: Path, dpi: int = 200):
@@ -190,17 +190,17 @@ def map_building_damage(features: list[dict], out_path: Path,
             color = DAMAGE_COLORS.get(cls, DAMAGE_COLORS[-1])
             xs, ys = zip(*pts)
             ax.fill(xs, ys, color=color, alpha=0.80, linewidth=0)
-            ax.plot(xs, ys, color="white", alpha=0.20, linewidth=0.4)
+            ax.plot(xs, ys, color="#888", alpha=0.30, linewidth=0.4)
         except Exception:
             pass
 
     apply_bbox_limits(ax, bbox)
     add_legend_damage(ax)
     title = "Building-Level Damage Assessment — LA Fire 2025" + subtitle + "\n"
-    title += "(M1: Probability Averaging across post-disaster dates)"
-    ax.set_title(title, color="white", fontsize=13, pad=12)
-    ax.set_xlabel("Longitude", color="white")
-    ax.set_ylabel("Latitude", color="white")
+    title += "(M2b: Coverage-Aware Majority Vote across post-disaster dates)"
+    ax.set_title(title, color="black", fontsize=13, pad=12)
+    ax.set_xlabel("Longitude", color="black")
+    ax.set_ylabel("Latitude", color="black")
     save_fig(fig, out_path, dpi=200)
 
 
@@ -230,8 +230,8 @@ def map_damage_density(features: list[dict], out_path: Path,
         hb = ax.hexbin(lons_ok, lats_ok, gridsize=gridsize, cmap="Blues",
                        mincnt=1, alpha=0.5, linewidths=0)
         cb = plt.colorbar(hb, ax=ax, label="Building count (no/minor damage)", fraction=0.03)
-        cb.ax.yaxis.set_tick_params(color="white")
-        cb.ax.yaxis.label.set_color("white")
+        cb.ax.yaxis.set_tick_params(color="black")
+        cb.ax.yaxis.label.set_color("black")
 
     pt_size = 12 if bbox else 6
     if lons_dmg:
@@ -241,10 +241,10 @@ def map_damage_density(features: list[dict], out_path: Path,
     apply_bbox_limits(ax, bbox)
     ax.set_title("Damage Density — LA Fire 2025" + subtitle +
                  "\nRed dots = major/destroyed buildings",
-                 color="white", fontsize=12)
-    ax.set_xlabel("Longitude", color="white")
-    ax.set_ylabel("Latitude", color="white")
-    ax.legend(fontsize=9, facecolor="#333", labelcolor="white", loc="lower left")
+                 color="black", fontsize=12)
+    ax.set_xlabel("Longitude", color="black")
+    ax.set_ylabel("Latitude", color="black")
+    ax.legend(fontsize=9, facecolor="white", labelcolor="black", loc="lower left")
     save_fig(fig, out_path, dpi=200)
 
 
@@ -283,25 +283,25 @@ def map_per_cell_damage_pct(features: list[dict], out_path: Path,
         color = cmap(norm(pct))
         size = max(30, min(400, stats["total"] * (5 if bbox else 3)))
         ax.scatter(cx, cy, c=[color], s=size, alpha=0.85, linewidth=0.5,
-                   edgecolors="white")
+                   edgecolors="#666")
         if stats["total"] >= label_threshold:
             fs = 7 if bbox else 5
             ax.text(cx, cy, f"{pct:.0f}%", ha="center", va="center",
-                    fontsize=fs, color="white", weight="bold")
+                    fontsize=fs, color="black", weight="bold")
 
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cb = plt.colorbar(sm, ax=ax, fraction=0.03,
                       label="% buildings major/destroyed")
-    cb.ax.yaxis.set_tick_params(color="white")
-    cb.ax.yaxis.label.set_color("white")
+    cb.ax.yaxis.set_tick_params(color="black")
+    cb.ax.yaxis.label.set_color("black")
 
     apply_bbox_limits(ax, bbox)
     ax.set_title("Per-Cell Damage Percentage — LA Fire 2025" + subtitle + "\n"
                  "(circle size ∝ n buildings; color = % major/destroyed)",
-                 color="white", fontsize=12)
-    ax.set_xlabel("Longitude", color="white")
-    ax.set_ylabel("Latitude", color="white")
+                 color="black", fontsize=12)
+    ax.set_xlabel("Longitude", color="black")
+    ax.set_ylabel("Latitude", color="black")
     save_fig(fig, out_path, dpi=200)
 
 
@@ -330,13 +330,13 @@ def map_uncertainty(features: list[dict], out_path: Path,
         mpatches.Patch(color="#e74c3c", label="Unstable (conflicting dates)"),
         mpatches.Patch(color="#2ecc71", label="Stable (consistent dates)"),
     ]
-    ax.legend(handles=patches, loc="lower left", facecolor="#333",
-              labelcolor="white", fontsize=9)
+    ax.legend(handles=patches, loc="lower left", facecolor="white",
+              labelcolor="black", fontsize=9)
     ax.set_title("Prediction Uncertainty — LA Fire 2025" + subtitle + "\n"
                  "(dot size ∝ entropy; red = conflicting damage labels across dates)",
-                 color="white", fontsize=12)
-    ax.set_xlabel("Longitude", color="white")
-    ax.set_ylabel("Latitude", color="white")
+                 color="black", fontsize=12)
+    ax.set_xlabel("Longitude", color="black")
+    ax.set_ylabel("Latitude", color="black")
     save_fig(fig, out_path, dpi=200)
 
 
@@ -401,7 +401,7 @@ def map_highlighted_areas(features: list[dict], out_path: Path,
         circle = plt.Circle((cx, cy), circle_r, color=color, alpha=0.25, linewidth=0)
         ax.add_patch(circle)
         ax.scatter(cx, cy, c=color, s=100, alpha=0.9, linewidth=0.5,
-                   edgecolors="white", zorder=5)
+                   edgecolors="#666", zorder=5)
         ax.text(cx + circle_r * 0.5, cy + circle_r * 0.5,
                 cid.replace("cell_", ""), fontsize=label_fs,
                 color=color, alpha=0.9, zorder=6, weight="bold")
@@ -410,13 +410,13 @@ def map_highlighted_areas(features: list[dict], out_path: Path,
     apply_bbox_limits(ax, bbox)
     patches = [mpatches.Patch(color=v, label=k) for k, v in cluster_colors.items()]
     patches.append(mpatches.Patch(color="#555", label="Other buildings"))
-    ax.legend(handles=patches, loc="lower left", facecolor="#333",
-              labelcolor="white", fontsize=9)
+    ax.legend(handles=patches, loc="lower left", facecolor="white",
+              labelcolor="black", fontsize=9)
     ax.set_title(f"Representative Areas — LA Fire 2025" + subtitle + f"\n"
                  f"Highlighted: {len(highlighted)} notable cells",
-                 color="white", fontsize=12)
-    ax.set_xlabel("Longitude", color="white")
-    ax.set_ylabel("Latitude", color="white")
+                 color="black", fontsize=12)
+    ax.set_xlabel("Longitude", color="black")
+    ax.set_ylabel("Latitude", color="black")
     save_fig(fig, out_path, dpi=200)
     print(f"         highlighted={len(highlighted)} cells")
     return highlighted
