@@ -8,7 +8,7 @@ It is **not** the active Stage 1 package used by the pipeline.
 The production Stage 1 package is `sam3_building_identifier`, located at:
 
 ```
-/media/gisense/xihan/250812_tamu_cybertraining_team4/stage1/
+/media/gisense/xihan/archive/250812_tamu_cybertraining_team4/stage1/
 ```
 
 Install it with:

@@ -41,7 +41,7 @@ _LEGACY_CHIPS_PREFIXES = [
     "/media/data/la_fire_2025/chips",
     "/media/gisense/xihan/250812_CyberTraining_Team4/data/chips_600m",
     "/media/gisense/xihan/250812_CyberTraining_Team4/data/interim/chips_600m",
-    "/media/gisense/xihan/250812_tamu_cybertraining_team4/data/interim/chips_600m",
+    "/media/gisense/xihan/archive/250812_tamu_cybertraining_team4/data/interim/chips_600m",
 ]
 
 

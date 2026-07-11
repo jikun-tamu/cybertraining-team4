@@ -20,7 +20,7 @@ Full disaster impact assessment workflow:
 ### Full Pipeline Run (LA Fire, all cells)
 
 ```bash
-cd /media/gisense/xihan/250812_tamu_cybertraining_team4/pipeline
+cd /media/gisense/xihan/archive/250812_tamu_cybertraining_team4/pipeline
 
 conda run -n geoai_sam python scripts/run_multidate_experiment.py \
     --device cuda:0 \

@@ -2,6 +2,9 @@
 
 **Status: CONCLUDED — no active development.**
 **Date concluded**: 2026-07-10
+**Location**: moved to `/media/gisense/xihan/archive/250812_tamu_cybertraining_team4`
+on 2026-07-10. Active docs use the new path; archived notebooks and old reports may
+still reference the pre-move location.
 
 This document is the single entry point for anyone returning to this project. It records
 what was built, what the final results were, why we stopped, where every asset lives, and
@@ -60,7 +63,7 @@ unfinished scientific work (see §4).
 ## 3. Why the project concluded
 
 Assessed honestly in July 2026 (full analysis was done by comparing against the BRIGHT
-Challenge project, `/media/gisense/xihan/260515_BRIGHT_BuildingDamage_Challenge`):
+Challenge project, `/media/gisense/xihan/archive/260515_BRIGHT_BuildingDamage_Challenge`):
 
 1. **Separated stages cap accuracy.** Stage 1 is untrained (zero-shot) with a ~30% recall
    ceiling. Stage 2b was trained on ground-truth xBD footprints but receives SAM3's
@@ -104,7 +107,7 @@ detections over best single prompt).
 
 ## 5. Asset inventory
 
-### This repo (`/media/gisense/xihan/250812_tamu_cybertraining_team4`)
+### This repo (`/media/gisense/xihan/archive/250812_tamu_cybertraining_team4`)
 
 | Path | What | In git? |
 |---|---|---|
