@@ -51,6 +51,8 @@ M2b damage distribution: 16,246 no_damage / 4,174 minor / 39 major / 93 destroye
 
 Final product:
 `/media/data/building_instance_tamu/la_fire_2025/stage2_damage/multidate_full_run/building_damage_all_cells.{csv,geojson,gpkg}`
+— CSV + GPKG copies are also committed in-repo at `results/final_product/` (2026-07-10),
+so the deliverable survives independently of the data disk.
 
 **These predictions were never validated against ground truth.** That is the main
 unfinished scientific work (see §4).
@@ -119,10 +121,11 @@ detections over best single prompt).
 | `II_package/` | Local clone of collaborator repo, commit `e83271f`, **has uncommitted notebook edits** | no (standalone git repo) |
 | `archive/II_package_20260415_github_clone/` | Clone of the final I-GUIDE submission, commit `abf301f` | no (standalone git repo) |
 
-> ⚠️ **The trained Stage 2 checkpoints exist only on this disk** (gitignored). The
-> collaborator's GitHub repo carries copies via Git LFS (the competition notebook pulls
-> them), but verify that before relying on it. If this disk is at risk, back up
-> `pipeline/models/` first.
+> **Checkpoint backup — verified 2026-07-10**: all 4 Stage 2 checkpoints (stage2a +
+> 3× stage2b ensemble) are tracked via Git LFS in the collaborator's GitHub repo
+> (`jikun-tamu/Instance-Impact-IGUIDE-SpatialAIChallenge2026`, under `II_package/models/`),
+> confirmed with `git lfs ls-files` in the local clone. Local copies in
+> `pipeline/models/` are gitignored convenience copies.
 
 ### External / data (not in git)
 
