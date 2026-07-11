@@ -108,6 +108,8 @@ test/
 
 # Collaborator repo (standalone git repo, lives here for convenience but must not be tracked)
 II_package/
+# Clone of the final I-GUIDE submission (2026-04-15), also a standalone git repo
+archive/II_package_20260415_github_clone/
 
 # pipeline (formerly II_package): large outputs and model weights
 II_package.zip

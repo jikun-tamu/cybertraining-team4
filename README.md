@@ -3,6 +3,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 
+> **⚠️ PROJECT CONCLUDED (2026-07-10).** This project is no longer under active
+> development. **Start with [PROJECT_CONCLUSION.md](PROJECT_CONCLUSION.md)** — it records
+> final results, why the project ended, a full asset inventory (including which model
+> checkpoints exist only on local disk), how to re-run everything, and the recommended
+> continuation path (CAL FIRE DINS validation) if anyone picks this up.
+
 This repository contains the source code for the project **"Assessing Disaster Impact Through Streamlining Multimodal Geospatial Data with Building Damage Prediction and Demographic Attributes"**. Our goal is to develop a robust pipeline for rapidly assessing building damage and socio-economic impacts following natural disasters, using a combination of satellite imagery and demographic data.
 
 ## Mission
@@ -13,20 +19,19 @@ The repository is organized following modern data science best practices to ensu
 
 ```
 cybertraining-team4/
-├─ README.md                 # Project overview, setup, and workflow
-├─ pyproject.toml            # Package metadata and dependencies
-├─ environment.yml           # Conda environment for reproducibility
-├─ data/                     # (Not tracked by git) All project data
-│  ├─ raw/                   # Immutable raw data
-│  ├─ interim/               # Cleaned, intermediate data
-│  └─ processed/             # Final, analysis-ready datasets
-├─ notebooks/                # Exploratory notebooks for analysis and visualization
-├─ src/cybertraining_team4/  # Core project source code as an installable package
-├─ scripts/                  # Thin CLI wrappers for running pipeline steps
-├─ configs/                  # Configuration files (e.g., for models, experiments)
-├─ experiments/              # Output directories for individual experiment runs
-├─ results/                  # Aggregated results, figures, and tables for publication
-└─ tests/                    # Unit tests for ensuring code reliability
+├─ README.md                 # Project overview (this file)
+├─ PROJECT_CONCLUSION.md     # ★ Final status, results, asset inventory, resumption guide
+├─ CLAUDE.md                 # Working notes: environments, commands, parameters
+├─ stage1/                   # SAM3 zero-shot building detection package (production)
+├─ pipeline/                 # Combined Stage 1 + Stage 2 pipeline (models, configs, docs)
+├─ evaluation/               # xView2 benchmark script + results
+├─ reports/                  # M2b validation + I-GUIDE competition audit
+├─ results/                  # LA fire figures, prompt experiment outputs
+├─ notebooks/                # EDA and validation notebooks
+├─ src/cybertraining_team4/  # Early training code + collaborator's Stage 2 handoff
+├─ data/                     # (Not tracked by git) LA fire data
+├─ archive/                  # Exploration work: Mask R-CNN, PolyWorld, early SAM3 (not production)
+└─ II_package/               # Local clone of collaborator's I-GUIDE submission repo (not tracked)
 ```
 
 ---
@@ -85,11 +90,14 @@ The project is structured as a pipeline from data ingestion to final analysis.
 ---
 
 ## Case Studies
-This project validates its models using several recent U.S. natural disasters to ensure performance across varied physical and socio-demographic contexts.
+The pipeline was deployed end-to-end on one real event:
 
-- **2025 Southern California Wildfires**: Severe wildland-urban interface losses.
-- **2024 Hurricane Helene (North Carolina)**: Catastrophic inland flooding.
-- **2023 Midwest Tornado Outbreak (Iowa)**: High-intensity tornado damage.
+- **2025 Southern California Wildfires (completed)**: 295 grid cells, 21,797 building
+  instances with multi-date damage predictions. Not validated against ground truth —
+  see PROJECT_CONCLUSION.md §4 for the recommended DINS validation path.
+
+Hurricane Helene (2024) and the 2023 Midwest tornado outbreak were originally planned
+as additional case studies but were not pursued.
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a pull request or open an issue.

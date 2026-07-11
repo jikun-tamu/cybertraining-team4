@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **PROJECT CONCLUDED (2026-07-10)** — no active development. Read `PROJECT_CONCLUSION.md`
+> first: it has final results, asset inventory, and the resumption guide. The commands
+> below remain valid for re-running the pipeline.
+
 ## Project Overview
 
 Disaster impact assessment pipeline using satellite imagery, building damage prediction, and demographic data.
