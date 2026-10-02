@@ -34,7 +34,6 @@ def parse_args():
     p.add_argument("--stage1_device", type=str, default="cuda:0")
     p.add_argument("--stage1_prompt", type=str, default="building")
     p.add_argument("--stage1_min_size", type=int, default=30)
-    p.add_argument("--stage1_batch_size", type=int, default=1, help="Stage1 inference batch size")
 
     # Shared artifact args
     p.add_argument("--shared_script", type=Path, default=Path("scripts/infer/generate_shared_instance_subimages.py"))
@@ -213,7 +212,6 @@ def main():
         "--min-size", str(args.stage1_min_size),
         "--tile-size", "512",
         "--overlap", "64",
-        "--batch-size", str(args.stage1_batch_size),
         "--device", args.stage1_device,
         "--disaster-type", "pre",
     ]

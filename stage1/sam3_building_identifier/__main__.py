@@ -1,28 +1,8 @@
 """
-CLI entrypoint.
+CLI entry point.
 
-Usage examples
---------------
-# Run on 5 images:
-    python -m sam3_building_identifier \\
-        --input-dir /path/to/images \\
-        --output-dir /path/to/output \\
-        --max-images 5
-
-# Post-disaster images, CUDA device 1:
-    python -m sam3_building_identifier \\
-        --input-dir /path/to/images \\
-        --output-dir /path/to/output \\
-        --disaster-type post \\
-        --device cuda:1
-
-# Dry-run: discover images but do NOT run inference:
-    python -m sam3_building_identifier \\
-        --input-dir /path/to/images \\
-        --output-dir /path/to/output \\
-        --dry-run
-
-Full list of options:  python -m sam3_building_identifier --help
+    python -m sam3_building_identifier --input-dir <dir> --output-dir <dir> [options]
+    python -m sam3_building_identifier --help
 """
 
 from __future__ import annotations
@@ -35,243 +15,81 @@ from sam3_building_identifier.config import PipelineConfig
 from sam3_building_identifier.pipeline import run_pipeline
 from sam3_building_identifier.utils import discover_images, log
 
+D = PipelineConfig()  # defaults
+
 
 def _parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="python -m sam3_building_identifier",
-        description=(
-            "SAM3 Building Identifier — detect buildings in xView2-style "
-            "satellite imagery and output per-instance JSON predictions."
-        ),
+        description="Detect buildings with SAM3 and write per-instance JSON predictions.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    p.add_argument("--input-dir", "-i", required=True, help="Directory of input images.")
+    p.add_argument("--output-dir", "-o", required=True, help="Root output directory.")
+    p.add_argument("--disaster-type", "-d", choices=["auto", "pre", "post", "all"],
+                   default=D.disaster_type, help="Filter by xView2 filename suffix.")
+    p.add_argument("--max-images", "-n", type=int, default=None, help="Process at most N images.")
 
-    # ---- I/O ----
-    io = p.add_argument_group("I/O")
-    io.add_argument(
-        "--input-dir", "-i",
-        default=PipelineConfig.input_dir,
-        help="Directory containing input images.",
-    )
-    io.add_argument(
-        "--output-dir", "-o",
-        default=PipelineConfig.output_dir,
-        help="Root output directory (sub-folders created automatically).",
-    )
+    p.add_argument("--device", default=None, help="Torch device, e.g. cuda, cuda:1, cpu.")
+    p.add_argument("--backend", default=D.backend, help="SamGeo3 backend (meta or transformers).")
+    p.add_argument("--model", default=D.model_id, dest="model_id",
+                   help="facebook/sam3 or facebook/sam3.1.")
+    p.add_argument("--confidence-threshold", type=float, default=D.confidence_threshold,
+                   help="SAM3 detection score threshold.")
+    p.add_argument("--checkpoint-path", default=None, help="Local SAM3 checkpoint.")
+    p.add_argument("--no-hf", action="store_false", dest="load_from_hf",
+                   help="Do not load weights from Hugging Face.")
 
-    # ---- Filtering ----
-    filt = p.add_argument_group("Image filtering")
-    filt.add_argument(
-        "--disaster-type", "-d",
-        choices=["auto", "pre", "post", "all"],
-        default="auto",
-        help=(
-            "Which images to process. "
-            "'auto' (default): use pre-disaster if that naming exists, else all. "
-            "'pre'/'post': filter by xView2 suffix. "
-            "'all': every image in the folder."
-        ),
-    )
-    filt.add_argument(
-        "--max-images", "-n",
-        type=int,
-        default=None,
-        metavar="N",
-        help="Process at most N images (useful for quick tests).",
-    )
+    p.add_argument("--prompt", default=D.text_prompt, dest="text_prompt", help="Text prompt.")
+    p.add_argument("--min-size", type=int, default=D.min_size, help="Minimum mask area (px).")
+    p.add_argument("--max-size", type=int, default=None, help="Maximum mask area (px).")
+    p.add_argument("--tile-size", type=int, default=D.tile_size,
+                   help="Window size for tiled inference; 0 runs on the full image.")
+    p.add_argument("--overlap", type=int, default=D.tile_overlap, help="Minimum window overlap (px).")
+    p.add_argument("--merge-iou", type=float, default=D.merge_iou,
+                   help="IoU in the shared overlap above which cross-window instances merge.")
 
-    # ---- Model ----
-    mdl = p.add_argument_group("Model")
-    mdl.add_argument(
-        "--device",
-        default=None,
-        help="Torch device: 'cuda', 'cuda:0', 'cpu'.  None → auto-detect.",
-    )
-    mdl.add_argument(
-        "--backend",
-        default="meta",
-        help="SamGeo3 backend identifier.",
-    )
-    mdl.add_argument(
-        "--checkpoint-path",
-        default=None,
-        help="Local checkpoint path.  None → download from Hugging Face.",
-    )
-    mdl.add_argument(
-        "--no-hf",
-        action="store_false",
-        dest="load_from_hf",
-        help="Do not load from Hugging Face (use local checkpoint instead).",
-    )
+    p.add_argument("--epsilon", type=float, default=D.polygon_epsilon, dest="polygon_epsilon",
+                   help="Polygon simplification tolerance (px).")
+    p.add_argument("--min-polygon-area", type=float, default=D.min_polygon_area,
+                   help="Drop polygons smaller than this (px^2).")
+    p.add_argument("--simplify-tolerance", type=float, default=None,
+                   help="Extra Shapely simplify() tolerance.")
 
-    # ---- Inference ----
-    inf = p.add_argument_group("Inference")
-    inf.add_argument(
-        "--prompt",
-        default="building",
-        dest="text_prompt",
-        help="Text prompt passed to SamGeo3.generate_masks().",
-    )
-    inf.add_argument(
-        "--min-size",
-        type=int,
-        default=100,
-        help="Minimum mask area (pixels) — smaller masks are discarded.",
-    )
-    inf.add_argument(
-        "--max-size",
-        type=int,
-        default=None,
-        help="Maximum mask area (pixels).  None → no upper limit.",
-    )
-    inf.add_argument(
-        "--tile-size",
-        type=int,
-        default=512,
-        help="Split images into NxN tiles before inference. "
-             "SAM3 downscales internally, so tiling improves recall on large images. "
-             "Set to 0 to disable tiling and process full images.",
-    )
-    inf.add_argument(
-        "--overlap",
-        type=int,
-        default=64,
-        help="Overlap in pixels between adjacent tiles.",
-    )
-    inf.add_argument(
-        "--batch-size",
-        type=int,
-        default=1,
-        help="Number of images per SAM3 batch call (recommend 1 for GPU memory).",
-    )
-
-    # ---- Polygon ----
-    poly = p.add_argument_group("Polygon / vectorization")
-    poly.add_argument(
-        "--epsilon",
-        type=float,
-        default=2.0,
-        dest="polygon_epsilon",
-        help="Polygon simplification tolerance (pixels) for geoai.orthogonalize.",
-    )
-    poly.add_argument(
-        "--min-polygon-area",
-        type=float,
-        default=100.0,
-        help="Minimum polygon area (sq-pixels) after vectorization. "
-             "Filters stitching artifacts at tile boundaries.",
-    )
-    poly.add_argument(
-        "--simplify-tolerance",
-        type=float,
-        default=None,
-        help="Optional extra Shapely simplify() tolerance.  None → skip.",
-    )
-
-    # ---- Output ----
-    out = p.add_argument_group("Output control")
-    out.add_argument(
-        "--no-masks",
-        action="store_false",
-        dest="save_masks",
-        help="Do not save mask/scores TIF files.",
-    )
-    out.add_argument(
-        "--no-annotations",
-        action="store_false",
-        dest="save_annotations",
-        help="Do not save annotation PNG files.",
-    )
-    out.add_argument(
-        "--annotation-dpi",
-        type=int,
-        default=150,
-        help="DPI for annotation PNGs.",
-    )
-    out.add_argument(
-        "--no-skip",
-        action="store_false",
-        dest="skip_existing",
-        help="Re-process images even if prediction JSON already exists.",
-    )
-
-    # ---- Misc ----
-    misc = p.add_argument_group("Misc")
-    misc.add_argument(
-        "--dry-run",
-        action="store_true",
-        help=(
-            "Discover images and print what would be processed, "
-            "then exit without running inference."
-        ),
-    )
-    misc.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable DEBUG logging.",
-    )
-
+    p.add_argument("--no-masks", action="store_false", dest="save_masks", help="Skip mask TIFs.")
+    p.add_argument("--no-annotations", action="store_false", dest="save_annotations",
+                   help="Skip annotation PNGs.")
+    p.add_argument("--no-skip", action="store_false", dest="skip_existing",
+                   help="Re-process images that already have a prediction JSON.")
+    p.add_argument("--dry-run", action="store_true", help="List images and exit.")
+    p.add_argument("--verbose", "-v", action="store_true", help="DEBUG logging.")
     return p.parse_args(argv)
-
-
-def _configure_logging(verbose: bool) -> None:
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        format="%(levelname)-8s %(name)s — %(message)s",
-        level=level,
-        stream=sys.stderr,
-    )
 
 
 def main(argv=None) -> int:
     args = _parse_args(argv)
-    _configure_logging(args.verbose)
+    logging.basicConfig(format="%(levelname)-8s %(name)s: %(message)s",
+                        level=logging.DEBUG if args.verbose else logging.INFO, stream=sys.stderr)
 
-    # Build config from CLI args
-    tile_size = args.tile_size if args.tile_size and args.tile_size > 0 else None
-    cfg = PipelineConfig(
-        input_dir=args.input_dir,
-        output_dir=args.output_dir,
-        disaster_type=args.disaster_type,
-        max_images=args.max_images,
-        device=args.device,
-        backend=args.backend,
-        checkpoint_path=args.checkpoint_path,
-        load_from_hf=args.load_from_hf,
-        text_prompt=args.text_prompt,
-        min_size=args.min_size,
-        max_size=args.max_size,
-        tile_size=tile_size,
-        tile_overlap=args.overlap,
-        batch_size=args.batch_size,
-        polygon_epsilon=args.polygon_epsilon,
-        min_polygon_area=args.min_polygon_area,
-        simplify_tolerance=args.simplify_tolerance,
-        save_masks=args.save_masks,
-        save_annotations=args.save_annotations,
-        save_predictions=True,
-        annotation_dpi=args.annotation_dpi,
-        skip_existing=args.skip_existing,
-    )
+    options = vars(args)
+    dry_run = options.pop("dry_run")
+    options.pop("verbose")
+    options["tile_overlap"] = options.pop("overlap")
+    options["tile_size"] = options["tile_size"] or None
+    cfg = PipelineConfig(**options)
 
-    # Dry-run: just list images and exit
-    if args.dry_run:
-        images = discover_images(
-            input_dir=cfg.input_dir,
-            disaster_type=cfg.disaster_type,
-            extensions=tuple(cfg.image_extensions),
-            max_images=cfg.max_images,
-        )
+    if dry_run:
+        images = discover_images(cfg.input_dir, cfg.disaster_type,
+                                 tuple(cfg.image_extensions), cfg.max_images)
         log(f"DRY-RUN: would process {len(images)} images")
-        for p in images:
-            print(p)
+        for path in images:
+            print(path)
         return 0
 
-    summary = run_pipeline(cfg)
-
-    if not summary:
+    totals = run_pipeline(cfg)
+    if not totals:
         return 1
-    return 0 if summary.get("errors", 0) == 0 else 2
+    return 0 if totals["images_error"] == 0 else 2
 
 
 if __name__ == "__main__":

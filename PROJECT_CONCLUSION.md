@@ -6,6 +6,12 @@
 on 2026-07-10. Active docs use the new path; archived notebooks and old reports may
 still reference the pre-move location.
 
+> **Update 2026-10 — Stage 1 revisited.** The Stage 1 numbers below are superseded. After
+> fixing the tile stitching and tuning tiling/threshold, SAM3 reaches P 0.737 / R 0.565 /
+> F1 0.640 on the same xView2 test set; the "~30% recall ceiling" came from full-image
+> inference. LA fire was re-run (22,024 buildings, `multidate_full_run_v2/`); Stage 2b damage
+> labels did not improve. Details: `reports/sam3_audit_2026-09.md`.
+
 This document is the single entry point for anyone returning to this project. It records
 what was built, what the final results were, why we stopped, where every asset lives, and
 what the one worthwhile continuation path would be.

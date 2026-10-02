@@ -2,37 +2,40 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **PROJECT CONCLUDED (2026-07-10)** — no active development. Read `PROJECT_CONCLUSION.md`
-> first: it has final results, asset inventory, and the resumption guide. The commands
-> below remain valid for re-running the pipeline.
+> **PROJECT CONCLUDED (2026-07-10), Stage 1 revisited (2026-09)** — read `PROJECT_CONCLUSION.md`
+> first, then `reports/sam3_audit_2026-09.md` for the Stage 1 rewrite, the new benchmark
+> and the LA fire re-run. The commands below are valid for re-running the pipeline.
 
 ## Project Overview
 
 Disaster impact assessment pipeline using satellite imagery, building damage prediction, and demographic data.
 
 **Active deliverables:**
-- **`stage1/`** — batch building-detection package using SAM3 (Segment Anything Model 3) via samgeo (formerly `SAM3_Claude/`)
+- **`stage1/`** — batch building-detection package using SAM3 via samgeo (`sam3_building_identifier`, v0.2)
 - **`pipeline/`** — combined Stage 1 + Stage 2 pipeline (formerly `II_package/`), collaborator-integrated
 - **`evaluation/`** — xView2 benchmark scripts and results
 
-**Exploration only** (not production): `archive/` (formerly `exploration/`) contains Mask R-CNN, PolyWorld, GeoAI_QuishengWu, and earlier SAM3 variants
+**Exploration only** (not production): `archive/` contains Mask R-CNN, PolyWorld, GeoAI_QuishengWu, and earlier SAM3 variants (`SAM3_Final`, notebooks)
 
 ## Environments
 
-**Always use `geoai_sam`** for SAM3 work. The other env (`geoai_sam3`) has an older samgeo without `SamGeo3`.
+**Use `geoai_sam`** (samgeo 1.0.1, SAM 3) for all pipeline work.
+`geoai_sam31` (samgeo 1.4.2, sam3 0.1.4) is only needed for `--model facebook/sam3.1`
+(gated on Hugging Face; access granted to account `xyaoaf`). SAM 3.1 gave no gain on xView2.
 
 ```bash
 conda activate geoai_sam          # interactive
-conda run -n geoai_sam <command>  # non-interactive / scripted
+conda run -n geoai_sam <command>  # non-interactive (conda is not on PATH in plain ssh:
+                                  # export PATH=/media/gisense/xihan/miniconda3/bin:$PATH)
 ```
+
+Edit files over ssh, not through the Finder/rclone mount: macOS writes `._*` AppleDouble
+files into the repo (and `.git/`) when saving through the mount.
 
 ## stage1 — SAM3 Building Detection Package
 
-**Location**: `stage1/`  (formerly `SAM3_Claude/`)
-**Install** (editable, no deps): `pip install -e stage1 --no-deps`
+**Install** (editable, no deps): `pip install -e stage1 --no-deps`, or `PYTHONPATH=stage1`
 **One-time HF login** (caches token): `python -c "from huggingface_hub import login; login()"`
-
-### Running the pipeline
 
 ```bash
 # Dry-run (list images, no inference)
@@ -41,97 +44,99 @@ python -m sam3_building_identifier --input-dir <dir> --output-dir <dir> --dry-ru
 # Process N images
 python -m sam3_building_identifier \
     --input-dir /media/data/building_instance_tamu/test/images \
-    --output-dir /tmp/sam3_out \
-    --max-images 10
+    --output-dir /tmp/sam3_out --max-images 10
 
-# Disaster-type filter (auto-detects xView2 _pre_disaster/_post_disaster suffixes)
-python -m sam3_building_identifier --disaster-type pre --device cuda:1 ...
-
-# Re-run over existing outputs (no skip)
-python -m sam3_building_identifier --no-skip ...
+# Predictions only (no mask TIFs / overlay PNGs), second GPU
+python -m sam3_building_identifier ... --no-masks --no-annotations --device cuda:1
 ```
 
-### Smoke test (3 images, ~30s on GPU)
+### Tests
 
 ```bash
-conda run -n geoai_sam python stage1/tests/smoke_test.py
+conda run -n geoai_sam python stage1/tests/test_tiling.py   # merge logic, no GPU
+conda run -n geoai_sam python stage1/tests/smoke_test.py    # 3 images end to end
 ```
 
 ### Key default parameters
 
 | Parameter | Default | Notes |
 |-----------|---------|-------|
-| `--prompt` | `"building"` | Text prompt for SAM3 |
-| `--tile-size` | `512` | Tile size; SAM3 resizes to 1024 internally, so tiling preserves detail. 0 to disable |
-| `--overlap` | `64` | Overlap between adjacent tiles |
+| `--prompt` | `"building"` | `house` has equal F1 on xView2 but lower wildfire recall |
+| `--confidence-threshold` | `0.4` | SamGeo3 default is 0.5; 0.4 gave best tiled F1 |
+| `--model` | `facebook/sam3` | `facebook/sam3.1` needs `geoai_sam31` |
+| `--tile-size` | `512` | 0 runs on the full image (recall drops from 0.565 to ~0.34) |
+| `--overlap` | `64` | Minimum window overlap; windows are evenly spaced, no slivers |
+| `--merge-iou` | `0.5` | Cross-window merge: IoU inside the shared window overlap |
 | `--min-size` | `100` | Min mask area in pixels |
-| `--min-polygon-area` | `100.0` | Filters tile-boundary stitching artifacts |
-| `--epsilon` | `2.0` | Douglas-Peucker polygon approx |
-| `--batch-size` | `1` | Keep at 1 for A6000 |
-| `--disaster-type` | `auto` | Filters images by filename suffix |
+| `--min-polygon-area` | `100.0` | Drops tiny polygons (the Feb 2026 benchmark had 4,412 of <10 px) |
+| `--epsilon` | `2.0` | Douglas-Peucker tolerance for `geoai.orthogonalize()` |
+| `--disaster-type` | `auto` | Filters images by xView2 `_pre_disaster` / `_post_disaster` suffix |
 
 ## Package Architecture (`sam3_building_identifier/`)
 
 ```
-config.py          — PipelineConfig dataclass (all tuneable params + computed dirs)
-model.py           — SAM3Model: lazy-loads SamGeo3, wraps single/batch inference
-pipeline.py        — run_pipeline(): batch loop with tiling support, JSON output, run_summary.json
-tiling.py          — generate_tiles(), stitch_masks() for tile-based inference
-mask_to_polygon.py — masks_to_instances(): geoai.orthogonalize() → cv2 fallback
-utils.py           — discover_images(), timer() context manager, log()
+config.py          — PipelineConfig dataclass (all tuneable params)
+model.py           — SAM3Model: loads SamGeo3 once, predict(rgb array) -> [(mask, score)]
+tiling.py          — tile_windows(), merge_instances() (cross-window), paint_labels()
+pipeline.py        — run_pipeline(): detect -> merge -> vectorize -> save, run_summary.json
+mask_to_polygon.py — labels_to_instances(): geoai.orthogonalize() per label value
+utils.py           — discover_images(), infer_disaster_type(), log()
 __main__.py        — argparse CLI → PipelineConfig → run_pipeline()
 ```
 
-**Critical SamGeo3 API behavior**:
-- `SamGeo3.generate_masks()` returns **None** — results stored in `self.masks`, `self.boxes`, `self.scores`
-- `SamGeo3.generate_masks_batch()` results stored in `self.batch_results` (list of per-image dicts)
-- Count masks with `len(getattr(sam3, 'masks', None) or [])`
-
-**Vectorization**: prefers `geoai.orthogonalize()` (matches notebook ground-truth); falls back to OpenCV `cv2.findContours` + Shapely if geoai unavailable.
+**SamGeo3 API behavior**:
+- `generate_masks()` returns **None** — results are stored in `.masks`, `.boxes`, `.scores`
+- Meta's SAM3 crashes on `cuda:1` unless the current CUDA device is set; `SAM3Model.load()`
+  calls `torch.cuda.set_device()`. `CUDA_VISIBLE_DEVICES=1 ... --device cuda` also works.
+- `rasterio.features.shapes` (used by orthogonalize) rejects uint32; labels are int32.
 
 ## Output Schema
 
-Per-image: `predictions/<stem>_prediction.json`
-Run aggregate: `run_summary.json`
+Per-image: `predictions/<stem>_prediction.json`; run aggregate: `run_summary.json`
+(full config + `git describe` code version).
 
 ```json
 {
   "image": {"path", "stem", "width", "height", "disaster_type"},
   "instances": [{"id", "uid", "bbox_xyxy":[x1,y1,x2,y2], "polygon":[[x,y],...], "area_px", "confidence"}],
   "timing": {"inference_sec", "postprocess_sec", "total_sec"},
-  "summary": {"num_instances", "status"}
+  "summary": {"num_instances", "num_windows", "num_raw_detections", "status"}
 }
 ```
 
-Other outputs per image (when detections > 0):
-- `masks/<stem>_mask.tif` — instance mask raster
-- `masks/<stem>_scores.tif` — confidence scores raster
-- `annotations/<stem>_ann.png` — visualization overlay
+Other outputs per image (when detections > 0): `masks/<stem>.tif` (int32 labels),
+`masks/<stem>_scores.tif`, `annotations/<stem>_ann.png`. Masks keep the input's CRS/transform.
 
-## Test Data
+## Benchmark and Data
 
-- **1866 images** at `/media/data/building_instance_tamu/test/images/` (933 pre, 933 post; 1024×1024 PNG, xView2 naming)
-- **Notebook ground-truth outputs**: `/media/data/building_instance_tamu/sam3/test/`
+- **xView2 test**: 1,866 images at `/media/data/building_instance_tamu/test/images/` (933 pre used), labels in `test/labels/`
+- **Current Stage 1 predictions**: `/media/data/building_instance_tamu/xview2_sam3_outputs_v2/test/`
+  (P 0.737 / R 0.565 / F1 0.640); prompt runs in `sam3_prompt_experiments_v2/`. The pre-fix
+  Feb/Mar 2026 outputs (`xview2_sam3_outputs/`, `sam3_prompt_experiments/`) were deleted 2026-10-02.
+- **Experiments**: `/media/data/building_instance_tamu/tiling_experiments/` (runs A–L, see audit report)
+- **LA fire**: `la_fire_2025/stage2_damage/multidate_full_run_v2/` (re-run with stage1 v0.2);
+  the April 2026 run (`multidate_full_run/`) was deleted 2026-10-02; its combined product is in
+  git history (`results/final_product/` at commit `0dc7630`).
+
+```bash
+python evaluation/evaluate_predictions.py                        # default: test split, v2 outputs
+python evaluation/evaluate_predictions.py --pred-dir <dir>/predictions --name run
+python evaluation/run_prompt_experiments.py --eval-only          # prompts, same config for all
+```
 
 ## Other Components
 
 | Directory | Purpose |
 |-----------|---------|
-| `pipeline/` | Combined Stage 1+2 pipeline (collaborator-integrated); LA fire validation outputs in `pipeline/outputs/` |
-| `evaluation/` | xView2 benchmark script (`evaluate_predictions.py`) + results in `evaluation/results/sam3_eval/` |
-| `results/` | LA fire run outputs (masks, overlays, logs) |
-| `src/cybertraining_team4/` | Core project package (training, evaluation stages) |
+| `pipeline/` | Combined Stage 1+2 pipeline; `scripts/run_multidate_experiment.py` runs LA fire (Stage 1 via `stage1/`) |
+| `evaluation/` | `evaluate_predictions.py` (single evaluation implementation) + `run_prompt_experiments.py` |
+| `results/` | LA fire figures, final product (`results/final_product/`), prompt overlays |
+| `reports/` | M2b validation, I-GUIDE audit, SAM3 audit (2026-09) |
+| `src/cybertraining_team4/` | Early training code + collaborator's original Stage 2 handoff |
 | `notebooks/` | EDA and validation notebooks |
-| `data/` | LA fire data: raw/ (immutable) → interim/ → processed/ |
-| `archive/` | Experimental/comparison work, formerly `exploration/` (not production) |
-| `archive/SAM3_notebooks/` | Original SAM3 Jupyter notebooks |
-| `archive/SAM3_Final/` | Alternative SAM3 pipeline with georeferencing recovery and GeoJSON/GPKG output |
-| `archive/PolyWorld/` | PolygonGNN (CVPR 2022) building extraction |
-| `archive/Mask_R-CNN/` | Mask R-CNN training code |
-| `archive/GeoAI_QuishengWu/` | GeoAI experiments |
-| `archive/corrected_model/` | Early Mask R-CNN checkpoint (corrected_building_segmentation_model.pth) + eval results |
+| `archive/` | Experimental/comparison work (not production) |
 
 ## GPU Notes
 
-- 2× NVIDIA RTX A6000 (47.5 GB each); specify `--device cuda:0` or `cuda:1`
-- GPU memory cleared between images via `torch.cuda.empty_cache()` + `gc.collect()`
+- 2× NVIDIA RTX A6000 (47.5 GB each), shared with other lab members — check `nvidia-smi` first
+- Tiled inference: ~8 s per 1024 px image; full LA run (295 cells, Stage 1+2) ~6 h on one GPU

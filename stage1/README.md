@@ -1,153 +1,118 @@
 # SAM3 Building Identifier
 
-Batch pipeline that uses **SAM3** (via `samgeo`) to detect buildings in
-satellite imagery and output per-instance bounding boxes, polygons, and
-confidence scores as JSON.
+Batch pipeline that uses **SAM3** (via `samgeo.SamGeo3`) to detect buildings in
+satellite imagery and write per-instance polygons and confidence scores as JSON.
+Version 0.2.0 (2026-09): rewritten tiling/merging after the September 2026 audit,
+see `reports/sam3_audit_2026-09.md`.
 
 ## What it does
 
-1. Scans an input folder for images (filters to `_pre_disaster` images by
-   default; falls back to all images if that naming is absent).
-2. **Tiles** each image into 512px overlapping patches (SAM3 internally
-   resizes to ~1024px, so tiling preserves detail on large images).
-3. Runs SAM3 text-prompted segmentation (`prompt="building"`) on each tile.
-4. **Stitches** tile masks back into full-image masks using score-based
-   replacement at overlaps.
-5. Saves:
-   - `masks/`       -- instance mask TIF + per-pixel scores TIF
-   - `annotations/` -- PNG visualization with colored masks and scores
-   - `predictions/` -- one JSON per image with bboxes, polygons, confidence
-   - `run_summary.json` -- aggregate stats for the whole run
+1. Finds input images (xView2 `_pre_disaster` images by default; all images if
+   that naming is absent). PNG, JPEG and 8-bit GeoTIFF are supported.
+2. Splits each image into overlapping 512 px windows. SAM3 resizes every input to
+   1008 px, so a 1024 px image loses small buildings unless it is tiled.
+3. Runs SAM3 with a text prompt (`"building"`) on every window.
+4. Merges detections across windows: two instances from different windows are the
+   same building when their masks agree (IoU >= 0.5) inside the region both
+   windows see. Merged instances take the mask union and the highest score.
+5. Vectorizes each instance with `geoai.orthogonalize()` and writes:
+   - `predictions/<stem>_prediction.json` per image (pixel coordinates)
+   - `masks/<stem>.tif` (int32 instance labels) and `masks/<stem>_scores.tif`,
+     georeferenced when the input is a GeoTIFF
+   - `annotations/<stem>_ann.png` polygon overlay
+   - `run_summary.json` with the full config, code version and totals
 
 ## Requirements
 
-Use the **`geoai_sam`** conda environment:
+Use the **`geoai_sam`** conda environment (samgeo 1.0.1, SAM 3 weights).
+`geoai_sam31` (samgeo 1.4.2, sam3 0.1.4) is only needed for `--model facebook/sam3.1`.
 
 ```bash
-conda activate geoai_sam
+pip install -e stage1 --no-deps      # once, or set PYTHONPATH=stage1
+python -c "from huggingface_hub import login; login()"   # first weight download only
 ```
 
-Install this package (once, development mode):
-
-```bash
-pip install -e stage1 --no-deps
-```
-
-A Hugging Face login is required the first time SAM3 weights are downloaded:
-
-```bash
-python -c "from huggingface_hub import login; login()"
-```
-
-## Quick test (3 images)
+## Run
 
 ```bash
 conda run -n geoai_sam python -m sam3_building_identifier \
     --input-dir /media/data/building_instance_tamu/test/images \
-    --output-dir /tmp/sam3_test \
-    --max-images 3
+    --output-dir /tmp/sam3_test --max-images 3
 ```
 
-Or run the smoke test:
+Tests:
 
 ```bash
-conda run -n geoai_sam python stage1/tests/smoke_test.py
+conda run -n geoai_sam python stage1/tests/test_tiling.py   # merge logic, no GPU
+conda run -n geoai_sam python stage1/tests/smoke_test.py    # 3 images end to end
 ```
 
-## Run on a full folder
-
-```bash
-conda run -n geoai_sam python -m sam3_building_identifier \
-    --input-dir /media/data/building_instance_tamu/test/images \
-    --output-dir /media/data/building_instance_tamu/xview2_sam3_outputs/test
-```
-
-The pipeline skips images whose `_prediction.json` already exists
-(`--no-skip` to override). Re-runs are safe.
+Images that already have a prediction JSON are skipped (`--no-skip` to re-run).
 
 ## Key parameters
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--input-dir` | (see config) | Folder of input images |
-| `--output-dir` | (see config) | Root output folder |
-| `--prompt` | `"building"` | Text prompt for SAM3 |
-| `--tile-size` | `512` | Tile size in pixels (0 to disable) |
-| `--overlap` | `64` | Overlap between tiles in pixels |
-| `--min-size` | `100` | Minimum mask area (pixels) |
-| `--min-polygon-area` | `100.0` | Min polygon area after vectorization |
-| `--epsilon` | `2.0` | Polygon simplification tolerance |
+| `--prompt` | `building` | SAM3 text prompt |
+| `--confidence-threshold` | `0.4` | SAM3 score threshold (SamGeo3 default is 0.5) |
+| `--model` | `facebook/sam3` | or `facebook/sam3.1` (needs `geoai_sam31`) |
+| `--tile-size` | `512` | Window size; `0` runs on the full image |
+| `--overlap` | `64` | Minimum overlap between windows |
+| `--merge-iou` | `0.5` | Cross-window merge threshold |
+| `--min-size` | `100` | Minimum mask area (px) |
+| `--min-polygon-area` | `100` | Minimum polygon area (px^2) |
+| `--epsilon` | `2.0` | Polygon simplification tolerance (px) |
 | `--disaster-type` | `auto` | `pre`, `post`, `all`, or `auto` |
 | `--device` | auto | `cuda`, `cuda:1`, `cpu` |
-| `--max-images N` | all | Process only the first N images |
-| `--no-skip` | -- | Re-process already-done images |
-| `--dry-run` | -- | List images that would be processed, then exit |
+| `--no-masks`, `--no-annotations` | | Skip the TIF / PNG outputs |
 
-Full list: `python -m sam3_building_identifier --help`
+Full list: `python -m sam3_building_identifier --help`.
+
+## Benchmark (xView2 test, 933 pre-disaster images, IoU >= 0.5)
+
+| Configuration | Precision | Recall | F1 |
+|---|---:|---:|---:|
+| Published Feb 2026 (full image, old code) | 0.682 | 0.284 | 0.401 |
+| Full image, fixed code, threshold 0.5 | 0.871 | 0.284 | 0.428 |
+| Tiled, old pixel stitching | 0.639 | 0.492 | 0.556 |
+| Tiled, instance merge, threshold 0.5 | 0.794 | 0.507 | 0.619 |
+| **Tiled, instance merge, threshold 0.4 (default)** | **0.737** | **0.565** | **0.640** |
+| Same, prompt `house` | 0.708 | 0.593 | 0.645 |
+| Full image, SAM 3.1 | 0.869 | 0.281 | 0.425 |
+
+Results: `evaluation/results/sam3_eval/` (default config) and
+`evaluation/results/prompt_experiments/`. Predictions:
+`/media/data/building_instance_tamu/xview2_sam3_outputs_v2/test/`.
 
 ## Output format
-
-Each image produces a `predictions/<stem>_prediction.json`:
 
 ```json
 {
   "image": {"path": "...", "stem": "...", "width": 1024, "height": 1024, "disaster_type": "pre"},
   "instances": [
-    {
-      "id": 1,
-      "uid": "b90f65d8-...",
-      "bbox_xyxy": [429, 83, 495, 134],
-      "polygon": [[453, 83], [453, 84], ...],
-      "area_px": 2128.0,
-      "confidence": 0.8094
-    }
+    {"id": 1, "uid": "b90f65d8-...", "bbox_xyxy": [429, 83, 495, 134],
+     "polygon": [[453, 83], [453, 84], ...], "area_px": 2128.0, "confidence": 0.8094}
   ],
-  "timing": {"inference_sec": 0.44, "postprocess_sec": 5.0, "total_sec": 5.9},
-  "summary": {"num_instances": 3, "status": "ok"}
+  "timing": {"inference_sec": 7.1, "postprocess_sec": 0.4, "total_sec": 7.5},
+  "summary": {"num_instances": 3, "num_windows": 9, "num_raw_detections": 7, "status": "ok"}
 }
 ```
 
-## Package architecture
+## Package layout
 
 ```
-config.py          -- PipelineConfig dataclass (all tuneable params)
-model.py           -- SAM3Model: lazy-loads SamGeo3, wraps inference
-pipeline.py        -- run_pipeline(): batch loop with tiling support
-tiling.py          -- generate_tiles(), stitch_masks() for tile-based inference
-mask_to_polygon.py -- masks_to_instances(): geoai.orthogonalize() -> cv2 fallback
-utils.py           -- discover_images(), timer(), log()
-__main__.py        -- argparse CLI -> PipelineConfig -> run_pipeline()
+config.py          PipelineConfig dataclass (every tuneable parameter)
+model.py           SAM3Model: loads SamGeo3 once, predict(image) -> [(mask, score)]
+tiling.py          tile_windows(), merge_instances(), paint_labels()
+pipeline.py        run_pipeline(): per-image detect -> merge -> vectorize -> save
+mask_to_polygon.py labels_to_instances(): geoai.orthogonalize() per label
+utils.py           discover_images(), infer_disaster_type(), log()
+__main__.py        CLI -> PipelineConfig -> run_pipeline()
 ```
-
-## Why tiling?
-
-SAM3's vision encoder internally resizes inputs to ~1024x1024. For large
-images (e.g., 1966x1966 LA fire chips), this causes 2x downscaling and
-small buildings are missed. Tiling to 512px means each tile gets 2x
-**upscaled** to 1024, preserving fine detail. Score-based stitching
-resolves overlaps by keeping the higher-confidence detection at each pixel.
-
-## Prompt experiments
-
-Initial experiments on cell_00365 (LA fire, mixed residential):
-
-| Prompt | Detections | Notes |
-|--------|-----------|-------|
-| `"building"` | 387 | Current default, consistent with xView2 benchmarks |
-| `"house"` | 410 | +6% recall, best single prompt |
-| `"apartment building"` | 17 | Only finds large structures |
-| `"rooftop"` | 182 | Misses many buildings |
-| Ensemble (building+house) | 419 | +2.2% over best single, 2x inference cost |
-
-Full comparison figures in `results/prompt_experiment/`.
-Future work: multi-prompt ensemble with score-based mask merging (same
-algorithm as tile stitching). See config.py docstring for details.
 
 ## Notes
 
-- **GPU**: 2x NVIDIA RTX A6000 (47.5 GB each). Keep `--batch-size 1`.
-  GPU memory cleared between images via `torch.cuda.empty_cache()`.
-- **Tiling**: Default 512px tiles with 64px overlap. Set `--tile-size 0`
-  to process full images (not recommended for images > 1024px).
-- **Polygon method**: `geoai.orthogonalize()` with `epsilon=2` (matches
-  notebooks). Falls back to OpenCV contours if geoai is unavailable.
+- SamGeo3 `generate_masks()` returns None; results are on `.masks` / `.scores`.
+- Meta's SAM3 crashes on `cuda:1` unless the current CUDA device is set;
+  `SAM3Model.load()` does this. `CUDA_VISIBLE_DEVICES=1 --device cuda` also works.
+- Tiled inference costs about 9x a full-image pass (about 8 s per 1024 px image on an A6000).

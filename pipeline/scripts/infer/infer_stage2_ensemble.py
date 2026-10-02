@@ -20,9 +20,12 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 # Prefer clean module; fall back to monolithic train_stage2 for compatibility.
+# This file lives in pipeline/scripts/infer/: stage2b_model is in pipeline/,
+# train_stage2.py in pipeline/scripts/training/.
+import sys as _sys
+_PIPELINE_ROOT = Path(__file__).resolve().parents[2]
+_sys.path.insert(0, str(_PIPELINE_ROOT))
 try:
-    import sys as _sys
-    _sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from stage2b_model import (
         SiameseDamageModel,
         collate_batch,
@@ -35,6 +38,7 @@ try:
         read_rows,
     )
 except ImportError:
+    _sys.path.insert(0, str(_PIPELINE_ROOT / "scripts/training"))
     from train_stage2 import (
         SiameseDamageModel,
         collate_batch,

@@ -33,7 +33,7 @@ sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
 
 from la_fire_paths import canonical_manifest_path, canonical_run_root, rewrite_la_fire_path
 
-PKG_ROOT = Path(__file__).resolve().parents[1]
+PKG_ROOT = Path(__file__).resolve().parents[2]  # pipeline/
 
 
 def fix_path(p: str) -> str:

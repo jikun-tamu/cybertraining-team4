@@ -1,141 +1,95 @@
 """
-PipelineConfig — all tuneable parameters in one place.
-
-Every parameter has a docstring and a default that matches the source-of-truth
-notebooks (251210_sam3_batch_segmentation_Xihan.ipynb and
-251210_sam3_image_segmentation_xihan.ipynb).
+PipelineConfig: every tuneable parameter in one place.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 
 @dataclass
 class PipelineConfig:
-    # ------------------------------------------------------------------
-    # I/O
-    # ------------------------------------------------------------------
+    # --- I/O ---
     input_dir: str = ""
-    """Directory containing input images.
-    Must be provided explicitly via --input-dir or set before calling run_pipeline().
-    No default — will raise an error if left empty."""
+    """Directory containing input images (required)."""
 
     output_dir: str = ""
-    """Root output directory.  Sub-folders are created automatically.
-    Must be provided explicitly via --output-dir or set before calling run_pipeline().
-    No default — will raise an error if left empty."""
+    """Root output directory; masks/, annotations/, predictions/ are created in it (required)."""
 
-    # ------------------------------------------------------------------
-    # Image filtering
-    # ------------------------------------------------------------------
     disaster_type: str = "auto"
-    """Which images to process.
-
-    'auto' (default) — inspect the folder at runtime:
-                       if any *_pre_disaster.* files exist → use pre only;
-                       otherwise → process all images in the folder.
-    'pre'  → *_pre_disaster.* only (warns if none found, returns empty list)
-    'post' → *_post_disaster.* only (warns if none found, returns empty list)
-    'all'  → every image file in input_dir
-    """
+    """'auto': pre-disaster images if xView2 *_pre_disaster naming exists, else all.
+    'pre' / 'post': filter by xView2 suffix. 'all': every image."""
 
     image_extensions: tuple = (".png", ".jpg", ".jpeg", ".tif", ".tiff")
-    """Accepted image file extensions (lower-cased)."""
-
-    # ------------------------------------------------------------------
-    # SAM3 model
-    # ------------------------------------------------------------------
-    backend: str = "meta"
-    """SAM3 backend. 'meta' uses Meta's official implementation."""
-
-    device: Optional[str] = None
-    """Torch device string ('cuda', 'cuda:0', 'cpu').
-    None → auto-detect: cuda if available, else cpu."""
-
-    load_from_hf: bool = True
-    """Load SAM3 weights from Hugging Face (requires prior huggingface-cli login)."""
-
-    checkpoint_path: Optional[str] = None
-    """Optional local checkpoint path. None → use default HF download."""
-
-    # ------------------------------------------------------------------
-    # Inference
-    # ------------------------------------------------------------------
-    text_prompt: str = "building"
-    """Text prompt passed to SamGeo3.generate_masks().
-
-    Future: multi-prompt ensemble support is planned via a `prompts` field
-    (e.g., prompts=["building", "house"]) with score-based mask merging.
-    See results/prompt_experiment/ for initial findings:
-      - "building": 387 detections on cell_00365
-      - "house": 410 detections (+6% recall, best single prompt)
-      - ensemble(building+house): 419 detections (+2.2% over best single)
-    Current default "building" is kept for consistency with xView2 benchmarks.
-    """
-
-    min_size: int = 100
-    """Minimum mask area in pixels. Masks smaller than this are discarded."""
-
-    max_size: Optional[int] = None
-    """Maximum mask area in pixels. None → no upper limit."""
-
-    tile_size: Optional[int] = 512
-    """Tile size for splitting large images before inference.
-    SAM3 internally resizes to ~1024px, so large images lose detail.
-    512 with overlap=64 gives best recall. None → process full image."""
-
-    tile_overlap: int = 64
-    """Overlap in pixels between adjacent tiles (used when tile_size is set)."""
-
-    # ------------------------------------------------------------------
-    # Polygon / vectorization
-    # ------------------------------------------------------------------
-    polygon_epsilon: float = 2.0
-    """Douglas-Peucker simplification tolerance (pixels) passed to
-    geoai.orthogonalize().  Matches notebooks (epsilon=2)."""
-
-    min_polygon_area: float = 100.0
-    """Minimum polygon area (sq-pixels) to keep after vectorization.
-    Filters out tiny fragments from tile-boundary stitching artifacts.
-    Passed to geoai.orthogonalize(min_area=...)."""
-
-    simplify_tolerance: Optional[float] = None
-    """Extra Shapely simplify() tolerance after orthogonalize.
-    None → skip the extra simplification step."""
-
-    # ------------------------------------------------------------------
-    # Output control
-    # ------------------------------------------------------------------
-    save_masks: bool = True
-    """Save instance mask TIF and scores TIF to masks/ sub-dir."""
-
-    save_annotations: bool = True
-    """Save annotation PNG to annotations/ sub-dir."""
-
-    save_predictions: bool = True
-    """Save enhanced prediction JSON to predictions/ sub-dir."""
-
-    annotation_dpi: int = 150
-    """DPI for saved annotation PNGs."""
-
-    skip_existing: bool = True
-    """Skip images whose prediction JSON already exists in output_dir."""
-
-    # ------------------------------------------------------------------
-    # Batch / system
-    # ------------------------------------------------------------------
-    batch_size: int = 1
-    """Images per SAM3 batch call.  Notebooks use 1 due to GPU memory."""
 
     max_images: Optional[int] = None
-    """Cap the number of images to process (useful for testing). None → all."""
+    """Process at most this many images (for tests)."""
 
-    # ------------------------------------------------------------------
-    # Derived paths (computed from output_dir — do not set manually)
-    # ------------------------------------------------------------------
+    # --- SAM3 model ---
+    backend: str = "meta"
+    """SamGeo3 backend: 'meta' (Meta's official implementation) or 'transformers'."""
+
+    model_id: str = "facebook/sam3"
+    """'facebook/sam3' (Nov 2025) or 'facebook/sam3.1' (Mar 2026; needs samgeo>=1.4,
+    sam3>=0.1.4 and the geoai_sam31 env; Meta backend only)."""
+
+    confidence_threshold: float = 0.4
+    """SAM3 detection score threshold (SamGeo3 default 0.5). On the xView2 test
+    set with tiling, 0.4 gave the best F1 (0.640 vs 0.619 at 0.5, 0.628 at 0.3)."""
+
+    device: Optional[str] = None
+    """Torch device ('cuda', 'cuda:1', 'cpu'). None: cuda if available."""
+
+    load_from_hf: bool = True
+    """Load SAM3 weights from Hugging Face (requires a cached HF login)."""
+
+    checkpoint_path: Optional[str] = None
+    """Local checkpoint path. None: default HF download."""
+
+    # --- Inference ---
+    text_prompt: str = "building"
+    """Text prompt. With the default config 'house' scores about the same F1 on
+    xView2 (0.645 vs 0.640) but lower recall on the two wildfire events, so
+    'building' stays the default (evaluation/results/prompt_experiments/)."""
+
+    min_size: int = 100
+    """Minimum mask area in pixels, applied per window and again after merging."""
+
+    max_size: Optional[int] = None
+    """Maximum mask area in pixels. None: no limit."""
+
+    tile_size: Optional[int] = 512
+    """Window size for tiled inference. None: run on the full image."""
+
+    tile_overlap: int = 64
+    """Minimum overlap between adjacent windows."""
+
+    merge_iou: float = 0.5
+    """IoU (inside the shared window overlap) above which two instances from
+    different windows are merged into one."""
+
+    # --- Polygons ---
+    polygon_epsilon: float = 2.0
+    """Douglas-Peucker tolerance (pixels) for geoai.orthogonalize()."""
+
+    min_polygon_area: float = 100.0
+    """Drop polygons smaller than this (square pixels)."""
+
+    simplify_tolerance: Optional[float] = None
+    """Optional extra Shapely simplify() tolerance. None: skip."""
+
+    # --- Outputs ---
+    save_masks: bool = True
+    """Write masks/<stem>.tif (int32 labels) and masks/<stem>_scores.tif."""
+
+    save_annotations: bool = True
+    """Write annotations/<stem>_ann.png (polygon overlay)."""
+
+    skip_existing: bool = True
+    """Skip images whose prediction JSON already exists."""
+
     @property
     def masks_dir(self) -> Path:
         return Path(self.output_dir) / "masks"
@@ -153,6 +107,8 @@ class PipelineConfig:
         return Path(self.output_dir) / "run_summary.json"
 
     def make_output_dirs(self) -> None:
-        """Create all output sub-directories."""
-        for d in (self.masks_dir, self.annotations_dir, self.predictions_dir):
-            d.mkdir(parents=True, exist_ok=True)
+        self.predictions_dir.mkdir(parents=True, exist_ok=True)
+        if self.save_masks:
+            self.masks_dir.mkdir(parents=True, exist_ok=True)
+        if self.save_annotations:
+            self.annotations_dir.mkdir(parents=True, exist_ok=True)

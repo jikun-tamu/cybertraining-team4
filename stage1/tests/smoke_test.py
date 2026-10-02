@@ -1,122 +1,64 @@
 """
-Smoke test: run the pipeline on 3 pre-disaster images and validate outputs.
+Smoke test: run the pipeline on 3 xView2 pre-disaster images and validate outputs.
 
-Run with:
-    conda run -n geoai_sam python tests/smoke_test.py
+    conda run -n geoai_sam python stage1/tests/smoke_test.py
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
-# Allow running from the SAM3_Claude root dir without installation
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # run without pip install
 
 from sam3_building_identifier import PipelineConfig, run_pipeline
 
-SMOKE_OUTPUT = "/tmp/sam3_smoke_test"
+OUT = Path("/tmp/sam3_smoke_test")
+shutil.rmtree(OUT, ignore_errors=True)
 
 cfg = PipelineConfig(
     input_dir="/media/data/building_instance_tamu/test/images",
-    output_dir=SMOKE_OUTPUT,
+    output_dir=str(OUT),
     disaster_type="pre",
     max_images=3,
-    skip_existing=False,   # always re-run for a clean test
-    save_masks=True,
-    save_annotations=True,
+    skip_existing=False,
 )
+run_pipeline(cfg)
 
-print("\n=== Running smoke test on 3 images ===\n")
-summary = run_pipeline(cfg)
-
-# ---------------------------------------------------------------------------
-# Validation
-# ---------------------------------------------------------------------------
 errors = []
+preds = sorted(cfg.predictions_dir.glob("*_prediction.json"))
+if len(preds) != 3:
+    errors.append(f"expected 3 prediction files, found {len(preds)}")
 
-pred_dir = Path(SMOKE_OUTPUT) / "predictions"
-pred_files = list(pred_dir.glob("*_prediction.json"))
-
-if len(pred_files) != 3:
-    errors.append(f"Expected 3 prediction files, found {len(pred_files)}")
-
-for pf in sorted(pred_files):
-    with open(pf) as fh:
-        doc = json.load(fh)
-
-    stem = pf.name.replace("_prediction.json", "")
-
-    # Check top-level keys
-    for key in ("image", "instances", "timing", "summary"):
-        if key not in doc:
-            errors.append(f"{pf.name}: missing key '{key}'")
-
-    # Check each instance has required fields
-    for i, inst in enumerate(doc.get("instances", [])):
-        for field in ("id", "uid", "bbox_xyxy", "polygon", "area_px", "confidence"):
-            if field not in inst:
-                errors.append(f"{pf.name} instance[{i}]: missing field '{field}'")
-
-        bbox = inst.get("bbox_xyxy", [])
-        if len(bbox) != 4:
-            errors.append(f"{pf.name} instance[{i}]: bbox_xyxy must have 4 values")
-        elif not (bbox[0] < bbox[2] and bbox[1] < bbox[3]):
-            errors.append(f"{pf.name} instance[{i}]: invalid bbox {bbox}")
-
-        poly = inst.get("polygon", [])
-        if len(poly) < 3:
-            errors.append(f"{pf.name} instance[{i}]: polygon too short ({len(poly)} pts)")
-
-    print(f"  {pf.name}")
-    print(f"    instances : {doc['summary']['num_instances']}")
-    print(f"    timing    : infer={doc['timing'].get('inference_sec', '?')}s  "
-          f"post={doc['timing'].get('postprocess_sec', '?')}s  "
-          f"total={doc['timing'].get('total_sec', '?')}s")
+for pf in preds:
+    doc = json.loads(pf.read_text())
+    stem = doc["image"]["stem"]
+    for i, inst in enumerate(doc["instances"]):
+        missing = {"id", "uid", "bbox_xyxy", "polygon", "area_px", "confidence"} - inst.keys()
+        if missing:
+            errors.append(f"{stem}[{i}]: missing {sorted(missing)}")
+        x1, y1, x2, y2 = inst["bbox_xyxy"]
+        if not (x1 < x2 and y1 < y2):
+            errors.append(f"{stem}[{i}]: invalid bbox {inst['bbox_xyxy']}")
+        if len(inst["polygon"]) < 4:
+            errors.append(f"{stem}[{i}]: polygon has {len(inst['polygon'])} points")
+        if not 0 < inst["confidence"] <= 1:
+            errors.append(f"{stem}[{i}]: confidence {inst['confidence']}")
     if doc["instances"]:
-        first = doc["instances"][0]
-        print(f"    sample[0] : bbox={first['bbox_xyxy']}  "
-              f"area={first['area_px']}  conf={first['confidence']}")
+        for path in (cfg.masks_dir / f"{stem}.tif", cfg.masks_dir / f"{stem}_scores.tif",
+                     cfg.annotations_dir / f"{stem}_ann.png"):
+            if not path.exists():
+                errors.append(f"missing {path.name}")
+    print(f"  {stem}: {doc['summary']['num_instances']} instances, {doc['timing']['total_sec']}s")
 
-# Check mask and annotation files exist — only required when detections > 0
-mask_dir = Path(SMOKE_OUTPUT) / "masks"
-ann_dir = Path(SMOKE_OUTPUT) / "annotations"
-for pf in sorted(pred_files):
-    stem = pf.name.replace("_prediction.json", "")
-    with open(pf) as fh:
-        doc = json.load(fh)
-    n = doc["summary"]["num_instances"]
-    if n > 0:
-        for suffix in (".tif", "_scores.tif"):
-            mf = mask_dir / f"{stem}{suffix}"
-            if not mf.exists():
-                errors.append(f"Missing mask file (expected, {n} detections): {mf.name}")
-        af = ann_dir / f"{stem}_ann.png"
-        if not af.exists():
-            errors.append(f"Missing annotation file (expected, {n} detections): {af.name}")
-    else:
-        print(f"  NOTE: {stem} — 0 detections, mask/ann files correctly absent")
+if not cfg.run_summary_path.exists():
+    errors.append("run_summary.json not written")
 
-# Check run_summary.json
-summary_path = Path(SMOKE_OUTPUT) / "run_summary.json"
-if not summary_path.exists():
-    errors.append("run_summary.json not created")
-else:
-    with open(summary_path) as fh:
-        rs = json.load(fh)
-    print(f"\nrun_summary.json:")
-    print(f"  images_processed : {rs['totals']['images_processed']}")
-    print(f"  total_buildings  : {rs['totals']['total_buildings']}")
-    print(f"  total_wall_time  : {rs['totals']['total_wall_time_sec']}s")
-    print(f"  avg_per_image    : {rs['totals']['avg_time_per_image_sec']}s")
-
-print()
 if errors:
-    print(f"FAIL — {len(errors)} validation error(s):")
+    print(f"FAIL: {len(errors)} error(s)")
     for e in errors:
-        print(f"  ✗ {e}")
+        print(f"  - {e}")
     sys.exit(1)
-else:
-    print("PASS — all validations passed.")
-    sys.exit(0)
+print("PASS")

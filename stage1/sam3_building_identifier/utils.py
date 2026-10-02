@@ -1,16 +1,12 @@
 """
-Utility helpers: file discovery, disaster-type filtering, image metadata,
-and a lightweight timing context manager.
+Utility helpers: image discovery, xView2 disaster-type filtering, logging.
 """
 
 from __future__ import annotations
 
 import time
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List, Optional, Tuple
-
-from PIL import Image
+from typing import List, Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -40,8 +36,8 @@ def discover_images(
         'auto' (default) — inspect the folder:
                            • If any *_pre_disaster.* files exist → use pre only.
                            • Otherwise → use all image files.
-        'pre'  → filenames containing '_pre_disaster' (raises if none found).
-        'post' → filenames containing '_post_disaster' (raises if none found).
+        'pre'  → filenames containing '_pre_disaster' (warns if none found).
+        'post' → filenames containing '_post_disaster' (warns if none found).
         'all'  → all files with accepted extensions.
     extensions:
         Accepted file extensions (lower-case, with leading dot).
@@ -116,12 +112,6 @@ def discover_images(
     return filtered
 
 
-def get_image_size(path: Path) -> Tuple[int, int]:
-    """Return (width, height) of an image without loading full pixel data."""
-    with Image.open(path) as img:
-        return img.size  # (width, height)
-
-
 def infer_disaster_type(stem: str) -> str:
     """Extract 'pre' or 'post' from an xView2-style filename stem."""
     if "_pre_disaster" in stem:
@@ -129,28 +119,6 @@ def infer_disaster_type(stem: str) -> str:
     if "_post_disaster" in stem:
         return "post"
     return "unknown"
-
-
-# ---------------------------------------------------------------------------
-# Timing
-# ---------------------------------------------------------------------------
-
-@contextmanager
-def timer() -> Generator[dict, None, None]:
-    """Context manager that measures elapsed wall-clock time in seconds.
-
-    Usage::
-
-        with timer() as t:
-            do_work()
-        print(t['elapsed'])
-    """
-    result: dict = {}
-    start = time.perf_counter()
-    try:
-        yield result
-    finally:
-        result["elapsed"] = round(time.perf_counter() - start, 3)
 
 
 # ---------------------------------------------------------------------------

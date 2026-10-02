@@ -174,7 +174,6 @@ def run_stage1(
          "--min-size", "30",
          "--tile-size", "512",
          "--overlap", "64",
-         "--batch-size", "1",
          "--device", device,
          "--no-annotations",
          "--disaster-type", "pre"],

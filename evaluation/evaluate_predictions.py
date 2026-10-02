@@ -2,8 +2,14 @@
 Evaluate SAM3 building segmentation predictions against xView2 ground truth labels.
 
 Usage:
-    python evaluate_predictions.py [--split test|train|both] [--iou-thresh 0.5]
-                                   [--output-dir results/sam3_eval]
+    # Standard benchmark (predictions in xview2_sam3_outputs_v2/)
+    python evaluate_predictions.py [--split test|train|both] [--iou-thresh 0.5]  # default: test
+
+    # Any prediction directory, e.g. an experiment run
+    python evaluate_predictions.py --pred-dir <dir>/predictions --name my_run \
+                                   [--label-dir /media/data/building_instance_tamu/test/labels]
+
+This module is also imported by run_prompt_experiments.py (evaluate_split).
 """
 
 import json
@@ -28,13 +34,15 @@ except ImportError:
 # ─── paths ────────────────────────────────────────────────────────────────────
 DATA_ROOT = Path("/media/data/building_instance_tamu")
 
+# xview2_sam3_outputs_v2/ holds predictions from the fixed stage1 package
+# (2026-09). The train split has not been re-run with it.
 SPLITS = {
     "test": {
-        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs/test/predictions",
+        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs_v2/test/predictions",
         "label_dir": DATA_ROOT / "test/labels",
     },
     "train": {
-        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs/train/predictions",
+        "pred_dir":  DATA_ROOT / "xview2_sam3_outputs_v2/train/predictions",
         "label_dir": DATA_ROOT / "train/labels",
     },
 }
@@ -371,20 +379,28 @@ def write_markdown_report(results: list[dict], out_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate SAM3 building predictions vs xView2 GT")
-    parser.add_argument("--split", choices=["test", "train", "both"], default="both")
+    parser.add_argument("--split", choices=["test", "train", "both"], default="test")
+    parser.add_argument("--pred-dir", type=Path, default=None,
+                        help="Evaluate this prediction directory instead of --split.")
+    parser.add_argument("--label-dir", type=Path, default=SPLITS["test"]["label_dir"],
+                        help="Ground-truth labels for --pred-dir.")
+    parser.add_argument("--name", default="custom", help="Result name for --pred-dir.")
     parser.add_argument("--iou-thresh", type=float, default=0.5)
-    parser.add_argument("--output-dir", default="results/sam3_eval")
+    parser.add_argument("--output-dir", type=Path,
+                        default=Path(__file__).resolve().parent / "results/sam3_eval")
     args = parser.parse_args()
 
-    out_dir = Path(args.output_dir)
+    out_dir = args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    splits_to_run = (["test", "train"] if args.split == "both"
-                     else [args.split])
+    if args.pred_dir is not None:
+        runs = {args.name: {"pred_dir": args.pred_dir, "label_dir": args.label_dir}}
+    else:
+        names = ["test", "train"] if args.split == "both" else [args.split]
+        runs = {name: SPLITS[name] for name in names}
 
     results = []
-    for split in splits_to_run:
-        cfg = SPLITS[split]
+    for split, cfg in runs.items():
         if not cfg["pred_dir"].exists():
             print(f"[SKIP] Prediction dir not found: {cfg['pred_dir']}")
             continue

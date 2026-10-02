@@ -125,3 +125,4 @@ exploration/*/outputs/
 *.egg-info/
 dist/
 build/
+._*

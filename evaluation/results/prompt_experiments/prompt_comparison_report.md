@@ -1,31 +1,25 @@
-# SAM3 Prompt Strategy Comparison
+# SAM3 Prompt Comparison
 
-**Dataset**: xView2 test set (933 images, 10 disaster types)  
-**IoU threshold**: 0.5
+**Dataset**: xView2 test set, pre-disaster (933 images)  
+**Match criterion**: IoU >= 0.5  
+**Stage-1 config**: `{"model_id": "facebook/sam3", "confidence_threshold": 0.4, "tile_size": 512, "tile_overlap": 64, "merge_iou": 0.5, "min_size": 100, "min_polygon_area": 100.0, "polygon_epsilon": 2.0, "code_version": null}`
 
----
+| Prompt | Precision | Recall | F1 | Mean IoU | Predicted | Images w/o pred |
+|--------|----------:|-------:|---:|---------:|----------:|----------------:|
+| `building` | 0.7369 | 0.5653 | 0.6398 | 0.7559 | 42087 | 227 |
+| `house` | 0.7083 | 0.5929 | 0.6455 | 0.7516 | 45922 | 224 |
 
-## Overall Metrics
+## F1 per disaster
 
-| Prompt | Precision | Recall | F1 | Mean IoU | Images w/o pred |
-|--------|----------:|-------:|---:|---------:|----------------:|
-| `building` | 0.6820 | 0.2837 | 0.4008 | 0.7589 | 276 |
-| `house` | 0.6979 | 0.3180 | 0.4369 | 0.7501 | 285 |
-| `rooftop` | 0.8451 | 0.0570 | 0.1068 | 0.8061 | 704 |
-| `building rooftop` | 0.8043 | 0.0746 | 0.1365 | 0.8035 | 633 |
-| `structure` | 0.7410 | 0.1318 | 0.2238 | 0.7734 | 371 |
-
-## F1 per Disaster
-
-| Disaster | building | house | rooftop | building rooftop | structure |
-|----------| -----:| -----:| -----:| -----:| -----:|
-| guatemala-volcano | 0.630 | 0.356 | 0.000 | 0.000 | 0.360 |
-| hurricane-florence | 0.751 | 0.757 | 0.268 | 0.482 | 0.696 |
-| hurricane-harvey | 0.421 | 0.537 | 0.093 | 0.111 | 0.182 |
-| hurricane-matthew | 0.286 | 0.377 | 0.018 | 0.028 | 0.127 |
-| hurricane-michael | 0.656 | 0.664 | 0.184 | 0.205 | 0.447 |
-| mexico-earthquake | 0.057 | 0.062 | 0.010 | 0.013 | 0.027 |
-| midwest-flooding | 0.482 | 0.521 | 0.066 | 0.093 | 0.337 |
-| palu-tsunami | 0.151 | 0.188 | 0.004 | 0.010 | 0.033 |
-| santa-rosa-wildfire | 0.655 | 0.673 | 0.430 | 0.458 | 0.366 |
-| socal-fire | 0.586 | 0.592 | 0.164 | 0.228 | 0.387 |
+| Disaster | building | house |
+|----------| -----:| -----:|
+| guatemala-volcano | 0.667 | 0.597 |
+| hurricane-florence | 0.853 | 0.839 |
+| hurricane-harvey | 0.746 | 0.716 |
+| hurricane-matthew | 0.599 | 0.619 |
+| hurricane-michael | 0.713 | 0.697 |
+| mexico-earthquake | 0.377 | 0.427 |
+| midwest-flooding | 0.677 | 0.665 |
+| palu-tsunami | 0.569 | 0.618 |
+| santa-rosa-wildfire | 0.816 | 0.799 |
+| socal-fire | 0.711 | 0.693 |
