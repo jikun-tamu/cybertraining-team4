@@ -1,0 +1,83 @@
+{
+ "first_date": {
+  "n": 9168,
+  "auc_destroyed": 0.895,
+  "tune_Eaton_test_Palisades": {
+   "tau": 0.15,
+   "precision": 0.686,
+   "recall": 0.618,
+   "f1": 0.65,
+   "n_test": 1303
+  },
+  "tune_Palisades_test_Eaton": {
+   "tau": 0.05,
+   "precision": 0.95,
+   "recall": 0.854,
+   "f1": 0.899,
+   "n_test": 7865
+  },
+  "tau_0.5_all": {
+   "precision": 0.799,
+   "recall": 0.882,
+   "f1": 0.839
+  },
+  "median_coverage": {
+   "dins_destroyed": 0.0,
+   "dins_no_damage": 0.69
+  }
+ },
+ "last_date": {
+  "n": 9168,
+  "auc_destroyed": 0.855,
+  "tune_Eaton_test_Palisades": {
+   "tau": 0.1,
+   "precision": 0.907,
+   "recall": 0.643,
+   "f1": 0.753,
+   "n_test": 1303
+  },
+  "tune_Palisades_test_Eaton": {
+   "tau": 0.15,
+   "precision": 0.857,
+   "recall": 0.886,
+   "f1": 0.871,
+   "n_test": 7865
+  },
+  "tau_0.5_all": {
+   "precision": 0.752,
+   "recall": 0.892,
+   "f1": 0.816
+  },
+  "median_coverage": {
+   "dins_destroyed": 0.0,
+   "dins_no_damage": 0.674
+  }
+ },
+ "multidate_max": {
+  "n": 9168,
+  "auc_destroyed": 0.873,
+  "tune_Eaton_test_Palisades": {
+   "tau": 0.4,
+   "precision": 0.94,
+   "recall": 0.404,
+   "f1": 0.566,
+   "n_test": 1303
+  },
+  "tune_Palisades_test_Eaton": {
+   "tau": 0.6,
+   "precision": 0.881,
+   "recall": 0.833,
+   "f1": 0.856,
+   "n_test": 7865
+  },
+  "tau_0.5_all": {
+   "precision": 0.942,
+   "recall": 0.792,
+   "f1": 0.861
+  },
+  "median_coverage": {
+   "dins_destroyed": 0.0,
+   "dins_no_damage": 0.797
+  }
+ }
+}

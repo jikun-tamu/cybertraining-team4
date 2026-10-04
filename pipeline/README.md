@@ -5,15 +5,19 @@ Full disaster impact assessment workflow:
 - **Stage 1**: Building detection using SAM3 (`sam3_building_identifier` package in `../stage1/`)
 - **Shared subimage generation**: 256x256 crops with mask channels
 - **Stage 2a**: Building type + population inference
-- **Stage 2b**: Damage classification via 3-model Siamese ConvNeXt ensemble
+- **Stage 2b**: Damage classification with a Siamese ConvNeXt model. Default `--stage2b_model xview2_all`
+  (one model trained on all ten xView2 tier1 events, Oct 2026); `flood_2026_04` reproduces the April
+  flood-only 3-model ensemble, which fails on wildfire (see `../reports/sam3_audit_2026-09.md` §7–8)
 - **Aggregation**: Multi-date M2b majority vote for real-world data
 
 ### Package Layout
 
 - `scripts/` -- runtime scripts (multidate experiment, driver, stage scripts)
 - `models/stage2a/` -- Stage 2a checkpoint
-- `models/stage2b/` -- 3 Stage 2b inference checkpoints
-- `configs/stage2b/` -- matching train configs for Stage 2b models
+- `models/stage2b_xview2_all/` -- default Stage 2b checkpoint (git-ignored; `stage2_training_data/runs/A_all/`)
+- `configs/stage2b_xview2_all/` -- its train config
+- `models/stage2b/` -- April 2026 flood-only checkpoints (3)
+- `configs/stage2b/` -- matching train configs for the flood models
 - `calibration/` -- per-checkpoint calibration artifacts
 - `docs/` -- technical documentation
 

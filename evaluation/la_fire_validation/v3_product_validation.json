@@ -1,0 +1,142 @@
+{
+ "multidate_full_run_v2": {
+  "pairs": 9905,
+  "class_counts_all_buildings": {
+   "-1": 1298,
+   "0": 16395,
+   "1": 4145,
+   "2": 60,
+   "3": 126
+  },
+  "m1_damage_class": {
+   "n": 9901,
+   "destroyed_P": 0.524,
+   "destroyed_R": 0.097,
+   "destroyed_F1": 0.164,
+   "any_damage_F1": 0.232,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.173,
+    "Palisades": 0.036
+   }
+  },
+  "m1b_damage_class": {
+   "n": 9168,
+   "destroyed_P": 0.0,
+   "destroyed_R": 0.0,
+   "destroyed_F1": 0.0,
+   "any_damage_F1": 0.102,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.0,
+    "Palisades": 0.0
+   }
+  },
+  "m2_majority_class": {
+   "n": 9901,
+   "destroyed_P": 0.517,
+   "destroyed_R": 0.092,
+   "destroyed_F1": 0.157,
+   "any_damage_F1": 0.263,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.164,
+    "Palisades": 0.048
+   }
+  },
+  "m2b_damage_class": {
+   "n": 9168,
+   "destroyed_P": 0.0,
+   "destroyed_R": 0.0,
+   "destroyed_F1": 0.0,
+   "any_damage_F1": 0.169,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.0,
+    "Palisades": 0.0
+   }
+  },
+  "m3_quality_filtered_class": {
+   "n": 9901,
+   "destroyed_P": 0.477,
+   "destroyed_R": 0.068,
+   "destroyed_F1": 0.12,
+   "any_damage_F1": 0.195,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.126,
+    "Palisades": 0.019
+   }
+  }
+ },
+ "multidate_full_run_v3": {
+  "pairs": 9905,
+  "class_counts_all_buildings": {
+   "-1": 1298,
+   "0": 14486,
+   "1": 122,
+   "2": 370,
+   "3": 5748
+  },
+  "m1_damage_class": {
+   "n": 9901,
+   "destroyed_P": 0.967,
+   "destroyed_R": 0.858,
+   "destroyed_F1": 0.909,
+   "any_damage_F1": 0.875,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.908,
+    "Palisades": 0.929
+   }
+  },
+  "m1b_damage_class": {
+   "n": 9168,
+   "destroyed_P": 0.97,
+   "destroyed_R": 0.949,
+   "destroyed_F1": 0.96,
+   "any_damage_F1": 0.915,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.961,
+    "Palisades": 0.944
+   }
+  },
+  "m2_majority_class": {
+   "n": 9901,
+   "destroyed_P": 0.968,
+   "destroyed_R": 0.857,
+   "destroyed_F1": 0.909,
+   "any_damage_F1": 0.875,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.907,
+    "Palisades": 0.933
+   }
+  },
+  "m2b_damage_class": {
+   "n": 9168,
+   "destroyed_P": 0.964,
+   "destroyed_R": 0.952,
+   "destroyed_F1": 0.958,
+   "any_damage_F1": 0.916,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.959,
+    "Palisades": 0.947
+   }
+  },
+  "m3_quality_filtered_class": {
+   "n": 9901,
+   "destroyed_P": 0.967,
+   "destroyed_R": 0.886,
+   "destroyed_F1": 0.925,
+   "any_damage_F1": 0.884,
+   "by_fire_destroyed_F1": {
+    "Eaton": 0.924,
+    "Palisades": 0.939
+   }
+  }
+ },
+ "v3_m2b_end_to_end_oracle_denominator": {
+  "n": 10876,
+  "n_destroyed": 4988,
+  "tp": 3886,
+  "precision": 0.964,
+  "recall": 0.779,
+  "f1": 0.862,
+  "Eaton": 0.859,
+  "Palisades": 0.895
+ }
+}

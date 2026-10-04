@@ -1,0 +1,72 @@
+{
+ "failed_steps": 0,
+ "first": {
+  "n": 10876,
+  "destroyed": {
+   "precision": 0.435,
+   "recall": 0.043,
+   "f1": 0.078,
+   "tp": 214,
+   "pred_pos": 492,
+   "n_pos": 4988
+  },
+  "any_damage": {
+   "precision": 0.381,
+   "recall": 0.124,
+   "f1": 0.187,
+   "tp": 705,
+   "pred_pos": 1850,
+   "n_pos": 5697
+  },
+  "pred_class_share": {
+   "0": 0.83,
+   "1": 0.123,
+   "2": 0.002,
+   "3": 0.045
+  }
+ },
+ "last": {
+  "n": 10876,
+  "destroyed": {
+   "precision": 0.434,
+   "recall": 0.043,
+   "f1": 0.078,
+   "tp": 215,
+   "pred_pos": 495,
+   "n_pos": 4988
+  },
+  "any_damage": {
+   "precision": 0.416,
+   "recall": 0.174,
+   "f1": 0.245,
+   "tp": 992,
+   "pred_pos": 2387,
+   "n_pos": 5697
+  },
+  "pred_class_share": {
+   "0": 0.781,
+   "1": 0.173,
+   "2": 0.001,
+   "3": 0.046
+  }
+ },
+ "m2b": {
+  "n": 10842,
+  "destroyed": {
+   "precision": 0.406,
+   "recall": 0.037,
+   "f1": 0.069,
+   "tp": 186,
+   "pred_pos": 458,
+   "n_pos": 4960
+  },
+  "any_damage": {
+   "precision": 0.362,
+   "recall": 0.143,
+   "f1": 0.205,
+   "tp": 808,
+   "pred_pos": 2233,
+   "n_pos": 5667
+  }
+ }
+}

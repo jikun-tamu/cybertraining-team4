@@ -9,8 +9,14 @@ still reference the pre-move location.
 > **Update 2026-10 — Stage 1 revisited.** The Stage 1 numbers below are superseded. After
 > fixing the tile stitching and tuning tiling/threshold, SAM3 reaches P 0.737 / R 0.565 /
 > F1 0.640 on the same xView2 test set; the "~30% recall ceiling" came from full-image
-> inference. LA fire was re-run (22,024 buildings, `multidate_full_run_v2/`); Stage 2b damage
-> labels did not improve. Details: `reports/sam3_audit_2026-09.md`.
+> inference. LA fire was re-run (22,024 buildings). The §4 validation was done in October 2026
+> against CAL FIRE DINS: Stage 1 footprint F1 0.60 (recall 0.84–0.91 for buildings > 100 m²);
+> the flood-only Stage 2b found ~0% of destroyed buildings; the same model retrained on all
+> xView2 events gives destroyed-building F1 0.96 on detected buildings and 0.86 end to end
+> (5,748 destroyed of 22,024), and a training-free persistence check reaches 0.82–0.86. The current product
+> (`multidate_full_run_v3/`, `results/final_product/`) uses the retrained model. The §3
+> conclusion that the stages cap accuracy no longer holds as stated. Details:
+> `reports/sam3_audit_2026-09.md` §6–9 and `reports/literature_review_2026-10.md`.
 
 This document is the single entry point for anyone returning to this project. It records
 what was built, what the final results were, why we stopped, where every asset lives, and

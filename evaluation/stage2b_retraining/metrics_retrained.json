@@ -1,0 +1,474 @@
+{
+ "flood_run019": {
+  "xview2_test": {
+   "all": {
+    "macro_f1": 0.325,
+    "destroyed_f1": 0.022
+   },
+   "earthquake": {
+    "macro_f1": 0.231,
+    "destroyed_f1": 0.0,
+    "n": 11400
+   },
+   "fire": {
+    "macro_f1": 0.193,
+    "destroyed_f1": 0.0,
+    "n": 8316
+   },
+   "flooding": {
+    "macro_f1": 0.403,
+    "destroyed_f1": 0.184,
+    "n": 12117
+   },
+   "tsunami": {
+    "macro_f1": 0.218,
+    "destroyed_f1": 0.016,
+    "n": 12414
+   },
+   "volcano": {
+    "macro_f1": 0.531,
+    "destroyed_f1": 1.0,
+    "n": 30
+   },
+   "wind": {
+    "macro_f1": 0.218,
+    "destroyed_f1": 0.007,
+    "n": 9573
+   }
+  },
+  "la": {
+   "first": {
+    "oracle": [
+     0.078,
+     0.435,
+     0.043
+    ],
+    "sam3_detected_only": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "sam3_end_to_end": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "oracle_any_damage": [
+     0.269,
+     0.367,
+     0.212
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.078,
+     "Palisades": 0.077
+    }
+   },
+   "last": {
+    "oracle": [
+     0.078,
+     0.434,
+     0.043
+    ],
+    "sam3_detected_only": [
+     0.0,
+     0.333,
+     0.0
+    ],
+    "sam3_end_to_end": [
+     0.0,
+     0.333,
+     0.0
+    ],
+    "oracle_any_damage": [
+     0.319,
+     0.426,
+     0.255
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.079,
+     "Palisades": 0.077
+    }
+   },
+   "max": {
+    "oracle": [
+     0.078,
+     0.433,
+     0.043
+    ],
+    "sam3_detected_only": [
+     0.0,
+     0.25,
+     0.0
+    ],
+    "sam3_end_to_end": [
+     0.0,
+     0.25,
+     0.0
+    ],
+    "oracle_any_damage": [
+     0.436,
+     0.4,
+     0.48
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.079,
+     "Palisades": 0.077
+    }
+   }
+  }
+ },
+ "A_all": {
+  "xview2_test": {
+   "all": {
+    "macro_f1": 0.772,
+    "destroyed_f1": 0.829
+   },
+   "earthquake": {
+    "macro_f1": 0.263,
+    "destroyed_f1": 0.0,
+    "n": 11400
+   },
+   "fire": {
+    "macro_f1": 0.518,
+    "destroyed_f1": 0.918,
+    "n": 8316
+   },
+   "flooding": {
+    "macro_f1": 0.623,
+    "destroyed_f1": 0.266,
+    "n": 12117
+   },
+   "tsunami": {
+    "macro_f1": 0.546,
+    "destroyed_f1": 0.899,
+    "n": 12414
+   },
+   "volcano": {
+    "macro_f1": 0.497,
+    "destroyed_f1": 0.667,
+    "n": 30
+   },
+   "wind": {
+    "macro_f1": 0.597,
+    "destroyed_f1": 0.688,
+    "n": 9573
+   }
+  },
+  "la": {
+   "first": {
+    "oracle": [
+     0.913,
+     0.974,
+     0.86
+    ],
+    "sam3_detected_only": [
+     0.942,
+     0.98,
+     0.907
+    ],
+    "sam3_end_to_end": [
+     0.845,
+     0.98,
+     0.743
+    ],
+    "oracle_any_damage": [
+     0.871,
+     0.891,
+     0.853
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.918,
+     "Palisades": 0.848
+    }
+   },
+   "last": {
+    "oracle": [
+     0.892,
+     0.883,
+     0.9
+    ],
+    "sam3_detected_only": [
+     0.911,
+     0.881,
+     0.943
+    ],
+    "sam3_end_to_end": [
+     0.823,
+     0.881,
+     0.771
+    ],
+    "oracle_any_damage": [
+     0.868,
+     0.883,
+     0.853
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.893,
+     "Palisades": 0.876
+    }
+   },
+   "max": {
+    "oracle": [
+     0.889,
+     0.85,
+     0.932
+    ],
+    "sam3_detected_only": [
+     0.907,
+     0.849,
+     0.974
+    ],
+    "sam3_end_to_end": [
+     0.822,
+     0.849,
+     0.797
+    ],
+    "oracle_any_damage": [
+     0.851,
+     0.812,
+     0.895
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.893,
+     "Palisades": 0.827
+    }
+   }
+  }
+ },
+ "B_fire": {
+  "xview2_test": {
+   "all": {
+    "macro_f1": 0.385,
+    "destroyed_f1": 0.592
+   },
+   "earthquake": {
+    "macro_f1": 0.245,
+    "destroyed_f1": 0.0,
+    "n": 11400
+   },
+   "fire": {
+    "macro_f1": 0.51,
+    "destroyed_f1": 0.925,
+    "n": 8316
+   },
+   "flooding": {
+    "macro_f1": 0.221,
+    "destroyed_f1": 0.079,
+    "n": 12117
+   },
+   "tsunami": {
+    "macro_f1": 0.421,
+    "destroyed_f1": 0.705,
+    "n": 12414
+   },
+   "volcano": {
+    "macro_f1": 0.398,
+    "destroyed_f1": 0.667,
+    "n": 30
+   },
+   "wind": {
+    "macro_f1": 0.284,
+    "destroyed_f1": 0.391,
+    "n": 9573
+   }
+  },
+  "la": {
+   "first": {
+    "oracle": [
+     0.94,
+     0.926,
+     0.954
+    ],
+    "sam3_detected_only": [
+     0.971,
+     0.98,
+     0.963
+    ],
+    "sam3_end_to_end": [
+     0.874,
+     0.98,
+     0.788
+    ],
+    "oracle_any_damage": [
+     0.897,
+     0.941,
+     0.857
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.95,
+     "Palisades": 0.805
+    }
+   },
+   "last": {
+    "oracle": [
+     0.919,
+     0.888,
+     0.952
+    ],
+    "sam3_detected_only": [
+     0.945,
+     0.934,
+     0.957
+    ],
+    "sam3_end_to_end": [
+     0.852,
+     0.934,
+     0.783
+    ],
+    "oracle_any_damage": [
+     0.882,
+     0.905,
+     0.86
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.926,
+     "Palisades": 0.821
+    }
+   },
+   "max": {
+    "oracle": [
+     0.905,
+     0.836,
+     0.987
+    ],
+    "sam3_detected_only": [
+     0.931,
+     0.879,
+     0.989
+    ],
+    "sam3_end_to_end": [
+     0.843,
+     0.879,
+     0.81
+    ],
+    "oracle_any_damage": [
+     0.883,
+     0.858,
+     0.908
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.915,
+     "Palisades": 0.776
+    }
+   }
+  }
+ },
+ "C_nofire": {
+  "xview2_test": {
+   "all": {
+    "macro_f1": 0.702,
+    "destroyed_f1": 0.757
+   },
+   "earthquake": {
+    "macro_f1": 0.249,
+    "destroyed_f1": 0.0,
+    "n": 11400
+   },
+   "fire": {
+    "macro_f1": 0.388,
+    "destroyed_f1": 0.739,
+    "n": 8316
+   },
+   "flooding": {
+    "macro_f1": 0.614,
+    "destroyed_f1": 0.295,
+    "n": 12117
+   },
+   "tsunami": {
+    "macro_f1": 0.527,
+    "destroyed_f1": 0.896,
+    "n": 12414
+   },
+   "volcano": {
+    "macro_f1": 0.657,
+    "destroyed_f1": 1.0,
+    "n": 30
+   },
+   "wind": {
+    "macro_f1": 0.553,
+    "destroyed_f1": 0.691,
+    "n": 9573
+   }
+  },
+  "la": {
+   "first": {
+    "oracle": [
+     0.429,
+     0.96,
+     0.276
+    ],
+    "sam3_detected_only": [
+     0.448,
+     0.977,
+     0.291
+    ],
+    "sam3_end_to_end": [
+     0.383,
+     0.977,
+     0.238
+    ],
+    "oracle_any_damage": [
+     0.815,
+     0.833,
+     0.799
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.418,
+     "Palisades": 0.565
+    }
+   },
+   "last": {
+    "oracle": [
+     0.504,
+     0.879,
+     0.353
+    ],
+    "sam3_detected_only": [
+     0.528,
+     0.886,
+     0.376
+    ],
+    "sam3_end_to_end": [
+     0.457,
+     0.886,
+     0.308
+    ],
+    "oracle_any_damage": [
+     0.731,
+     0.874,
+     0.629
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.495,
+     "Palisades": 0.621
+    }
+   },
+   "max": {
+    "oracle": [
+     0.678,
+     0.871,
+     0.555
+    ],
+    "sam3_detected_only": [
+     0.705,
+     0.883,
+     0.587
+    ],
+    "sam3_end_to_end": [
+     0.622,
+     0.883,
+     0.48
+    ],
+    "oracle_any_damage": [
+     0.821,
+     0.77,
+     0.88
+    ],
+    "oracle_by_fire": {
+     "Eaton": 0.675,
+     "Palisades": 0.716
+    }
+   }
+  }
+ }
+}

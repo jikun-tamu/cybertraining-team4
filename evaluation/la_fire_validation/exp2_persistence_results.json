@@ -1,0 +1,179 @@
+{
+ "first": {
+  "n_buildings": 10876,
+  "stage1_detected_share": 0.842,
+  "oracle_footprints": {
+   "precision": 0.755,
+   "recall": 0.901,
+   "f1": 0.822,
+   "tp": 4494,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_end_to_end": {
+   "precision": 0.799,
+   "recall": 0.722,
+   "f1": 0.759,
+   "tp": 3602,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_detected_only": {
+   "precision": 0.799,
+   "recall": 0.882,
+   "f1": 0.839,
+   "tp": 3602,
+   "n_destroyed": 4082
+  },
+  "Eaton": {
+   "oracle": {
+    "precision": 0.784,
+    "recall": 0.913,
+    "f1": 0.843,
+    "tp": 4276,
+    "n_destroyed": 4684
+   },
+   "sam3_end_to_end": {
+    "precision": 0.834,
+    "recall": 0.73,
+    "f1": 0.778,
+    "tp": 3418,
+    "n_destroyed": 4684
+   }
+  },
+  "Palisades": {
+   "oracle": {
+    "precision": 0.44,
+    "recall": 0.717,
+    "f1": 0.546,
+    "tp": 218,
+    "n_destroyed": 304
+   },
+   "sam3_end_to_end": {
+    "precision": 0.451,
+    "recall": 0.605,
+    "f1": 0.517,
+    "tp": 184,
+    "n_destroyed": 304
+   }
+  },
+  "stage1_detected_share_destroyed": 0.818,
+  "stage1_detected_share_not_destroyed": 0.863
+ },
+ "last": {
+  "n_buildings": 10876,
+  "stage1_detected_share": 0.842,
+  "oracle_footprints": {
+   "precision": 0.733,
+   "recall": 0.909,
+   "f1": 0.811,
+   "tp": 4533,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_end_to_end": {
+   "precision": 0.752,
+   "recall": 0.73,
+   "f1": 0.741,
+   "tp": 3642,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_detected_only": {
+   "precision": 0.752,
+   "recall": 0.892,
+   "f1": 0.816,
+   "tp": 3642,
+   "n_destroyed": 4082
+  },
+  "Eaton": {
+   "oracle": {
+    "precision": 0.75,
+    "recall": 0.919,
+    "f1": 0.826,
+    "tp": 4306,
+    "n_destroyed": 4684
+   },
+   "sam3_end_to_end": {
+    "precision": 0.778,
+    "recall": 0.735,
+    "f1": 0.756,
+    "tp": 3443,
+    "n_destroyed": 4684
+   }
+  },
+  "Palisades": {
+   "oracle": {
+    "precision": 0.514,
+    "recall": 0.747,
+    "f1": 0.609,
+    "tp": 227,
+    "n_destroyed": 304
+   },
+   "sam3_end_to_end": {
+    "precision": 0.477,
+    "recall": 0.655,
+    "f1": 0.552,
+    "tp": 199,
+    "n_destroyed": 304
+   }
+  },
+  "stage1_detected_share_destroyed": 0.818,
+  "stage1_detected_share_not_destroyed": 0.863
+ },
+ "max": {
+  "n_buildings": 10876,
+  "stage1_detected_share": 0.842,
+  "oracle_footprints": {
+   "precision": 0.888,
+   "recall": 0.817,
+   "f1": 0.851,
+   "tp": 4077,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_end_to_end": {
+   "precision": 0.942,
+   "recall": 0.648,
+   "f1": 0.768,
+   "tp": 3234,
+   "n_destroyed": 4988
+  },
+  "sam3_footprints_detected_only": {
+   "precision": 0.942,
+   "recall": 0.792,
+   "f1": 0.861,
+   "tp": 3234,
+   "n_destroyed": 4082
+  },
+  "Eaton": {
+   "oracle": {
+    "precision": 0.894,
+    "recall": 0.841,
+    "f1": 0.866,
+    "tp": 3937,
+    "n_destroyed": 4684
+   },
+   "sam3_end_to_end": {
+    "precision": 0.944,
+    "recall": 0.666,
+    "f1": 0.781,
+    "tp": 3119,
+    "n_destroyed": 4684
+   }
+  },
+  "Palisades": {
+   "oracle": {
+    "precision": 0.757,
+    "recall": 0.461,
+    "f1": 0.573,
+    "tp": 140,
+    "n_destroyed": 304
+   },
+   "sam3_end_to_end": {
+    "precision": 0.885,
+    "recall": 0.378,
+    "f1": 0.53,
+    "tp": 115,
+    "n_destroyed": 304
+   }
+  },
+  "stage1_detected_share_destroyed": 0.818,
+  "stage1_detected_share_not_destroyed": 0.863
+ }
+}

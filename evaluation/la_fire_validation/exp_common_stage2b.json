@@ -1,0 +1,66 @@
+{
+ "stage2b_first": {
+  "all": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "n": 9168,
+  "Eaton": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "Palisades": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  }
+ },
+ "stage2b_last": {
+  "all": {
+   "precision": 0.333,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "n": 9168,
+  "Eaton": {
+   "precision": 0.333,
+   "recall": 0.0,
+   "f1": 0.001
+  },
+  "Palisades": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  }
+ },
+ "stage2b_m2b": {
+  "all": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "n": 9168,
+  "Eaton": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "Palisades": {
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  }
+ },
+ "counts_first": {
+  "tp": 0,
+  "pred_destroyed": 0,
+  "dins_destroyed": 4084
+ },
+ "counts_last": {
+  "tp": 1,
+  "pred_destroyed": 3,
+  "dins_destroyed": 4084
+ }
+}

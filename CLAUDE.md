@@ -114,9 +114,14 @@ Other outputs per image (when detections > 0): `masks/<stem>.tif` (int32 labels)
   (P 0.737 / R 0.565 / F1 0.640); prompt runs in `sam3_prompt_experiments_v2/`. The pre-fix
   Feb/Mar 2026 outputs (`xview2_sam3_outputs/`, `sam3_prompt_experiments/`) were deleted 2026-10-02.
 - **Experiments**: `/media/data/building_instance_tamu/tiling_experiments/` (runs A–L, see audit report)
-- **LA fire**: `la_fire_2025/stage2_damage/multidate_full_run_v2/` (re-run with stage1 v0.2);
-  the April 2026 run (`multidate_full_run/`) was deleted 2026-10-02; its combined product is in
-  git history (`results/final_product/` at commit `0dc7630`).
+- **LA fire**: `la_fire_2025/stage2_damage/multidate_full_run_v3/` is current (stage1 v0.2 footprints,
+  Stage 2b = all-hazard xView2 model A). `multidate_full_run_v2/` has the same footprints with the
+  April flood Stage 2b; `multidate_oracle/` uses LARIAC footprints. The April 2026 run was deleted
+  2026-10-02 (product in git history, `results/final_product/` at `0dc7630`).
+- **Field validation**: `la_fire_2025/validation/` (LARIAC + CAL FIRE DINS ground truth, matched
+  pairs, experiment results); post-fire SAM 3 runs in `la_fire_2025/postfire_sam3/`.
+- **Stage 2b retraining**: `/media/data/building_instance_tamu/stage2_training_data/` (xView2 crops,
+  CSVs, runs A_all / B_fire / C_nofire, eval). Scripts copied to `evaluation/stage2b_retraining/`.
 
 ```bash
 python evaluation/evaluate_predictions.py                        # default: test split, v2 outputs
@@ -128,7 +133,7 @@ python evaluation/run_prompt_experiments.py --eval-only          # prompts, same
 
 | Directory | Purpose |
 |-----------|---------|
-| `pipeline/` | Combined Stage 1+2 pipeline; `scripts/run_multidate_experiment.py` runs LA fire (Stage 1 via `stage1/`) |
+| `pipeline/` | Combined Stage 1+2 pipeline; `scripts/run_multidate_experiment.py` runs LA fire (Stage 1 via `stage1/`; `--stage2b_model xview2_all` (default) or `flood_2026_04`) |
 | `evaluation/` | `evaluate_predictions.py` (single evaluation implementation) + `run_prompt_experiments.py` |
 | `results/` | LA fire figures, final product (`results/final_product/`), prompt overlays |
 | `reports/` | M2b validation, I-GUIDE audit, SAM3 audit (2026-09) |

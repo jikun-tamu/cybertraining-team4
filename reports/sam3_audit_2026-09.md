@@ -1,7 +1,8 @@
 # Stage 1 (SAM3) Audit and Rewrite — September 2026
 
 **Scope**: the SAM3 building-detection stage (`stage1/`), its xView2 benchmark and prompt
-experiments, and the LA fire 2025 deployment that depends on it.
+experiments, the LA fire 2025 deployment that depends on it, and (October) field validation and
+Stage 2b retraining.
 **Branch**: `sam3-stage1-fixes` (uncommitted for review).
 **Experiment data**: `/media/data/building_instance_tamu/tiling_experiments/` (runs A–L, logs,
 `eval/<run>/eval_<run>.json`, `run_tiling.sh`).
@@ -13,6 +14,12 @@ code that was deployed on LA fire, and the deployed code had a stitching bug. Af
 code and re-tuning, Stage 1 reaches **P 0.737 / R 0.565 / F1 0.640** on the same xView2 test
 set. The "~30% recall ceiling" in `PROJECT_CONCLUSION.md` was an artifact of running SAM3 on
 full 1024 px images; tiled inference roughly doubles recall.
+
+October follow-up (§6–9): validated against CAL FIRE DINS for both LA fires, Stage 1 footprints
+reach F1 0.60 against county outlines after correcting a ~4 m imagery offset. The April flood-only
+Stage 2b found almost none of the destroyed buildings; the same model retrained on all xView2
+events gives the new LA product (`multidate_full_run_v3/`) destroyed-building F1 0.96 on detected
+buildings and 0.86 end to end. A training-free persistence check reaches 0.82–0.86.
 
 ## 2. Findings
 
@@ -114,12 +121,109 @@ The April combined product stays in git history (`results/final_product/` at `0d
 Also fixed for this run: `infer_stage2_ensemble.py` import path (finding 7) and
 `build_combined_dataset.py` `PKG_ROOT`.
 
-## 6. Open issues outside Stage 1
+## 6. Field validation against CAL FIRE DINS (2026-10-02)
 
-- **Stage 2b on wildfire**: QC overlays show clearly burned parcels classified "no damage"
-  (old and new runs alike; cell_00365: 362 of 405 buildings "no damage"). Stage 2b was trained on
-  flood-only xBD and has never been validated on fire. Validating against CAL FIRE DINS
-  (`PROJECT_CONCLUSION.md` §4) and retraining on fire events are the next steps.
-- xView2 train-split predictions have not been re-run with v0.2 (`eval_train.json` is stale).
-- Prompts `rooftop`, `building rooftop`, `structure` not re-run with v0.2 (clearly worse in the
-  earlier full-image runs).
+**Ground truth**: LA County `WildFire_BUILDINGS_100M_Plus_DINS_MaxMinDAMAGE` feature service
+(LARIAC building outlines within 100 m of the 2025 perimeters with CAL FIRE DINS max/min damage,
+27 Feb 2025; 34,313 buildings) and the WFIGS perimeters for Eaton and Palisades.
+**Region**: imaged area (non-zero pixels of the 295 pre chips) ∩ (perimeters + 100 m) = 83.3 km²,
+14,369 buildings. Data, scripts and results: `/media/data/building_instance_tamu/la_fire_2025/validation/`;
+scripts and result JSONs are also in `evaluation/la_fire_validation/`.
+
+**Geolocation offset.** Maxar footprints sit a median 4.3 m from the LARIAC outlines, with a
+different offset per 600 m cell (x from −4.7 to +0.7 m). All IoU metrics below apply one
+translation per cell (median centroid offset of matched pairs, cells with ≥ 30 pairs). Without it,
+IoU-based F1 falls to ~0.20. Pre/post Maxar chips are co-registered to < 1 px in most pairs.
+
+**Stage 1 vs LARIAC** (IoU ≥ 0.5, co-registered): April v1 P 0.570 / R 0.557 / F1 0.563;
+v0.2 P 0.606 / R 0.591 / F1 0.598. Centroid-in-footprint recall 0.790, overlap precision 0.881.
+Recall by area: < 50 m² 0.60, 50–100 m² 0.70, 100–200 m² 0.84, 200–400 m² 0.90, > 400 m² 0.91.
+DINS-inspected structures: 0.81–0.88.
+
+## 7. Damage experiments against DINS
+
+Destroyed vs not destroyed; DINS "Destroyed (>50%)" is positive. Only (building, date) pairs whose
+footprint has valid post-fire pixels on a tile that passed the quality filter count.
+
+**Experiment 1 — building persistence (training-free).** SAM 3 (same stage1 v0.2 config) run on
+all 673 post-fire chips of the 124 evaluated cells (`la_fire_2025/postfire_sam3/`). Persistence =
+share of a pre-fire footprint still segmented as "building". Destroyed if < 0.5 (fixed, not tuned).
+On 9,168 matched buildings: first valid date P 0.799 / R 0.882 / F1 0.839; max over dates
+P 0.942 / R 0.792 / F1 0.861; AUC 0.87–0.90. Eaton 0.86–0.88, Palisades 0.54–0.57 (272 destroyed).
+Thresholds tuned on one fire and tested on the other give 0.65–0.75 on Palisades, 0.87–0.90 on Eaton.
+No post date looked like reused pre-fire imagery.
+
+**Experiment 5 — single vs multiple dates (April Stage 2b).** On single dates the flood model's few
+"destroyed" calls (recall 0.07–0.09) came almost entirely from crops with no image data; restricted
+to valid imagery it found 1 of 4,084 destroyed buildings. The M2b majority vote removed every
+"destroyed" call. The model was more confident on DINS-destroyed buildings it got wrong
+(mean top-class probability 0.69) than on undamaged ones (0.65), after temperature calibration.
+
+**Experiment 2 — oracle footprints.** LARIAC outlines, shifted onto the Maxar grid, replace Stage 1
+(14,361 footprints in 124 cells; `la_fire_2025/oracle_footprints/`, Stage 2b run in
+`stage2_damage/multidate_oracle/`). On 10,876 DINS buildings (4,988 destroyed):
+persistence F1 0.851 (max over dates) vs 0.768 end to end with SAM 3 footprints; flood Stage 2b
+F1 0.078 even with oracle footprints. Stage 1 misses 18% of destroyed buildings (detected share
+0.818 vs 0.863 for others), which is most of the end-to-end loss. Palisades stays low for
+persistence with oracle footprints (0.57), so its difficulty is in the post-fire imagery, not Stage 1.
+
+## 8. Stage 2b retrained on xView2 (2026-10-03)
+
+Same architecture and run019 settings (ConvNeXt-tiny Siamese, CORAL, mask+ring pooling, weighted
+sampler, EMA, early stopping), single GPU. Training crops for the 10 xView2 tier1 events were made
+with the LA inference crop generator from ground-truth pre-disaster polygons
+(`/media/data/building_instance_tamu/stage2_training_data/`, scripts in `evaluation/stage2b_retraining/`).
+Three event sets: A all hazards (159,794 buildings, 13,227 destroyed), B fire only (22,998; 4,800),
+C all but fire (136,796; 8,427). The April model had 502 destroyed examples.
+
+Destroyed F1 against DINS, first valid date, single checkpoint, no calibration:
+
+| Model | Training events | Oracle footprints | SAM 3 end to end | Eaton | Palisades |
+|---|---|---:|---:|---:|---:|
+| April Stage 2b (run019) | flood (3) | 0.078 | 0.000 | 0.078 | 0.077 |
+| C | all but fire (8) | 0.429 | 0.383 | 0.418 | 0.565 |
+| Persistence | none | 0.822 | 0.759 | 0.843 | 0.546 |
+| A | all hazards (10) | 0.913 | 0.845 | 0.918 | 0.848 |
+| B | fire only (2) | 0.940 | 0.874 | 0.950 | 0.805 |
+
+xView2 test split (53,850 buildings): macro-F1 / destroyed F1 — April 0.325 / 0.022,
+A 0.772 / 0.829, B 0.385 / 0.592, C 0.702 / 0.757. Fire test events, destroyed F1: April 0.000,
+A 0.918, B 0.925, C 0.739. The April model scores 0.40 macro-F1 on the xView2 flood test events
+here vs 0.73 on its own flood validation split (different split and preprocessing).
+
+Caveat: the two training fires (Santa Rosa, SoCal, both 2017) are Californian, so A and B are a
+same-hazard, nearby-region transfer to LA, not a test on an unfamiliar setting.
+
+`run_multidate_experiment.py` now takes `--stage2b_model {xview2_all, flood_2026_04}`
+(default `xview2_all` = model A; weights in `pipeline/models/stage2b_xview2_all/`, git-ignored).
+
+## 9. LA final product v3
+
+`multidate_full_run_v3/` (2026-10-03): v2 footprints, crops and Stage 2a, with Stage 2b replaced by
+model A (all-hazard xView2). Built by hard-linking v2 and regenerating only the Stage 2b outputs,
+aggregation and combined product (`evaluation/stage2b_retraining/make_v3.sh`, `split_jsonl.py`).
+Combined product: 22,024 buildings, M2b classes 14,486 no damage / 122 minor / 370 major /
+5,748 destroyed / 1,298 unknown (v2: 126 destroyed). Copied to `results/final_product/`.
+
+Against DINS, M2b destroyed vs not destroyed:
+
+| Product | Buildings | Precision | Recall | F1 | Eaton | Palisades |
+|---|---:|---:|---:|---:|---:|---:|
+| v2 (April Stage 2b), detected buildings | 9,168 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| v3 (model A), detected buildings | 9,168 | 0.964 | 0.952 | 0.958 | 0.959 | 0.947 |
+| v3, end to end (Stage 1 misses count as not detected) | 10,876 | 0.964 | 0.779 | 0.862 | 0.859 | 0.895 |
+
+With model A the M2b multi-date vote helps (F1 0.909 for the per-date probability average M1,
+0.958 for M2b), the opposite of the flood model, where the vote removed every destroyed call.
+Any-damage F1 (DINS affected or worse) is 0.916. The remaining gap is Stage 1: 18% of destroyed
+buildings are never detected on the pre-fire image (`results` in `la_fire_2025/validation/v3_product_validation.json`).
+
+## 10. Open issues
+
+- Stage 1 recall on small and destroyed buildings (18% of destroyed buildings never reach Stage 2).
+- Palisades: fewer imaged cells and lower scores for every method; check imagery dates and angles.
+- Full xBD tier3 adds three wildfires including Woolsey (2018, Los Angeles); download needs an
+  xview2.org account.
+- The two training fires are Californian; a fire outside California would test generalisation.
+- xView2 train-split SAM 3 predictions were not re-run with v0.2.
+- Prompts `rooftop`, `building rooftop`, `structure` not re-run with v0.2.

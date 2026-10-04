@@ -54,6 +54,33 @@ STAGE1_ENV_NAME = os.environ.get("GEOAI_SAM_ENV", "geoai_sam")
 
 PYTHON = sys.executable  # same interpreter that runs this script
 
+# Stage-2b model presets. infer_stage2_ensemble.py takes exactly three checkpoints, so a single
+# model is listed three times with equal weights.
+_A = PKG_ROOT / "models/stage2b_xview2_all/A_all_stage2_best.pt"
+_A_CFG = PKG_ROOT / "configs/stage2b_xview2_all/A_all_train_config.json"
+STAGE2B_PRESETS = {
+    # All ten xView2 tier1 events (Oct 2026). Destroyed-building F1 vs CAL FIRE DINS on the LA
+    # fires: 0.913 (oracle footprints) / 0.845 (SAM 3 footprints). See reports/sam3_audit_2026-09.md.
+    "xview2_all": {
+        "ckpts": [_A, _A, _A], "configs": [_A_CFG, _A_CFG, _A_CFG], "weights": "1,1,1",
+        "calibration_method": "none", "calibration_dirs": [],
+    },
+    # April 2026 flood-only ensemble (finds ~0% of DINS-destroyed buildings on the LA fires).
+    "flood_2026_04": {
+        "ckpts": [PKG_ROOT / "models/stage2b/inference0.7273.pt",
+                  PKG_ROOT / "models/stage2b/inference0.7066_seed9999.pt",
+                  PKG_ROOT / "models/stage2b/inference0.7034_seed7777.pt"],
+        "configs": [PKG_ROOT / "configs/stage2b/run019_seed2025_train_config.json",
+                    PKG_ROOT / "configs/stage2b/seed9999_train_config.json",
+                    PKG_ROOT / "configs/stage2b/seed7777_train_config.json"],
+        "weights": "4,3,2", "calibration_method": "temperature",
+        "calibration_dirs": [PKG_ROOT / "calibration/calibration_run019_r48",
+                             PKG_ROOT / "calibration/calibration_seed9999_r48",
+                             PKG_ROOT / "calibration/calibration_seed7777_r48"],
+    },
+}
+STAGE2B = STAGE2B_PRESETS["xview2_all"]  # set from --stage2b_model in main()
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -334,26 +361,16 @@ def run_date(
 
     # ── Stage 2b ensemble inference ──────────────────────────────────────────
     infer_script = PKG_ROOT / "scripts/infer/infer_stage2_ensemble.py"
+    calib = (["--calibration_dirs", ",".join(str(p) for p in STAGE2B["calibration_dirs"])]
+             if STAGE2B["calibration_dirs"] else [])
     rc = run(
         [PYTHON, infer_script,
          "--csv", shared_for_date,
-         "--ckpts", ",".join([
-             str(PKG_ROOT / "models/stage2b/inference0.7273.pt"),
-             str(PKG_ROOT / "models/stage2b/inference0.7066_seed9999.pt"),
-             str(PKG_ROOT / "models/stage2b/inference0.7034_seed7777.pt"),
-         ]),
-         "--weights", "4,3,2",
-         "--configs", ",".join([
-             str(PKG_ROOT / "configs/stage2b/run019_seed2025_train_config.json"),
-             str(PKG_ROOT / "configs/stage2b/seed9999_train_config.json"),
-             str(PKG_ROOT / "configs/stage2b/seed7777_train_config.json"),
-         ]),
-         "--calibration_method", "temperature",
-         "--calibration_dirs", ",".join([
-             str(PKG_ROOT / "calibration/calibration_run019_r48"),
-             str(PKG_ROOT / "calibration/calibration_seed9999_r48"),
-             str(PKG_ROOT / "calibration/calibration_seed7777_r48"),
-         ]),
+         "--ckpts", ",".join(str(p) for p in STAGE2B["ckpts"]),
+         "--weights", STAGE2B["weights"],
+         "--configs", ",".join(str(p) for p in STAGE2B["configs"]),
+         "--calibration_method", STAGE2B["calibration_method"],
+         *calib,
          "--out_jsonl", out_jsonl,
          "--batch_size", "64",
          "--num_workers", "4",
@@ -466,6 +483,12 @@ def parse_args():
         help="Stop early for validation runs. 'shared_base' runs Stage 1 plus shared_base only.",
     )
     p.add_argument(
+        "--stage2b_model",
+        choices=sorted(STAGE2B_PRESETS),
+        default="xview2_all",
+        help="Stage-2b damage model preset (default: xview2_all, trained on all xView2 tier1 events).",
+    )
+    p.add_argument(
         "--workflow",
         choices=["training", "realworld"],
         default="realworld",
@@ -482,7 +505,10 @@ def parse_args():
 
 
 def main():
+    global STAGE2B
     args = parse_args()
+    STAGE2B = STAGE2B_PRESETS[args.stage2b_model]
+    print(f"[stage2b] model preset: {args.stage2b_model}")
     args.out_root.mkdir(parents=True, exist_ok=True)
 
     if args.workflow == "training":
