@@ -3,7 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **PROJECT CONCLUDED (2026-07-10), Stage 1 revisited (2026-09)** — read `PROJECT_CONCLUSION.md`
-> first, then `reports/sam3_audit_2026-09.md` for the Stage 1 rewrite, the new benchmark
+> first, then `reports/handoff_2026-10.md` (current status and next steps) and
+> `reports/sam3_audit_2026-09.md` for the Stage 1 rewrite, the new benchmark
 > and the LA fire re-run. The commands below are valid for re-running the pipeline.
 
 ## Project Overview
