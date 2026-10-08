@@ -2,13 +2,14 @@
 
 Status of the LA fire 2025 damage assessment work after the September–October 2026 revisit,
 for whoever continues it. Work is on branch `sam3-stage1-fixes` (not merged into `main`).
-Server: `xihan@10.158.11.52`, env `geoai_sam`.
+Runs on the GISense lab server (UT Austin), env `geoai_sam`.
 
 ## Read first
 
 1. `reports/sam3_audit_2026-09.md` — everything that changed and every number, §1–10.
 2. `reports/literature_review_2026-10.md` — 42 references, what already exists, positioning options.
-3. Results page with figures (private; ask Xihan for access).
+3. `reports/results_summary_2026-10.md` — one page with the current numbers.
+4. Results page with figures (private; ask Xihan for access).
 
 ## Where things stand
 

@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 
-> **⚠️ PROJECT CONCLUDED (2026-07-10).** This project is no longer under active
-> development. **Start with [PROJECT_CONCLUSION.md](PROJECT_CONCLUSION.md)** — it records
-> final results, why the project ended, a full asset inventory (including which model
-> checkpoints exist only on local disk), how to re-run everything, and the recommended
-> continuation path (CAL FIRE DINS validation) if anyone picks this up.
+> **Active again (October 2026): paper in progress, led by Jinyu Zhou.** Start with
+> [COLLABORATION.md](COLLABORATION.md) (what is here, what is on the lab server, how to ask for
+> runs) and [reports/results_summary_2026-10.md](reports/results_summary_2026-10.md) (current
+> numbers). The July 2026 conclusion is kept in [PROJECT_CONCLUSION.md](PROJECT_CONCLUSION.md)
+> for history; the September–October 2026 audit superseded its results.
 
 This repository contains the source code for the project **"Assessing Disaster Impact Through Streamlining Multimodal Geospatial Data with Building Damage Prediction and Demographic Attributes"**. Our goal is to develop a robust pipeline for rapidly assessing building damage and socio-economic impacts following natural disasters, using a combination of satellite imagery and demographic data.
 
@@ -20,7 +20,8 @@ The repository is organized following modern data science best practices to ensu
 ```
 cybertraining-team4/
 ├─ README.md                 # Project overview (this file)
-├─ PROJECT_CONCLUSION.md     # ★ Final status, results, asset inventory, resumption guide
+├─ COLLABORATION.md         # ★ Start here: data, server resources, how to request runs
+├─ PROJECT_CONCLUSION.md     # July 2026 conclusion (history)
 ├─ CLAUDE.md                 # Working notes: environments, commands, parameters
 ├─ stage1/                   # SAM3 zero-shot building detection package (production)
 ├─ pipeline/                 # Combined Stage 1 + Stage 2 pipeline (models, configs, docs)
